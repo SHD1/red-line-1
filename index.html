@@ -30,6 +30,9 @@ body{
 .display{font-family:'Oswald','Tajawal',sans-serif; text-transform:uppercase; letter-spacing:.04em;}
 .mono{font-family:'JetBrains Mono',monospace;}
 svg{display:inline-block; vertical-align:middle;}
+.redline-scan{position:fixed; top:0; left:0; right:0; height:2px; z-index:9999; pointer-events:none; overflow:hidden; background:rgba(179,18,42,.08);}
+.redline-scan::before{content:''; position:absolute; top:0; bottom:0; width:25%; background:linear-gradient(90deg, transparent, var(--red-bright), var(--gold), var(--red-bright), transparent); box-shadow:0 0 12px var(--red-bright); animation:scanMove 5s linear infinite;}
+@keyframes scanMove{0%{left:-25%;} 100%{left:100%;}}
 
 .full-screen{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; background:var(--bg); z-index:200; text-align:center; padding:20px;}
 .spinner{width:34px; height:34px; border:3px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:spin 0.8s linear infinite;}
@@ -43,9 +46,18 @@ svg{display:inline-block; vertical-align:middle;}
 #loginScreen.active{display:flex;}
 .login-card{width:380px; max-width:92vw; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:30px 26px; box-shadow:0 30px 80px rgba(0,0,0,.5), 0 0 40px rgba(179,18,42,.15); animation:fadeIn .4s ease, glowPulse 3.4s ease-in-out infinite;}
 .login-brand{text-align:center; margin-bottom:22px;}
-.login-brand .logo-emoji{font-size:38px; margin-bottom:6px;}
-.login-brand h1{font-family:'Oswald'; font-size:24px; letter-spacing:.06em; margin:0;}
-.login-brand p{font-size:11px; color:var(--muted-2); letter-spacing:.15em; margin-top:4px; font-family:'JetBrains Mono';}
+.emblem-wrap{position:relative; width:96px; height:96px; margin:0 auto 4px; display:flex; align-items:center; justify-content:center;}
+.brand-emblem{position:absolute; inset:0; width:100%; height:100%; overflow:visible;}
+.emblem-shape{fill:none; stroke:var(--red-bright); stroke-width:3; stroke-dasharray:420; stroke-dashoffset:420; transform-origin:60px 60px; animation:emblemDraw 1.1s ease forwards, emblemSpin 14s linear infinite 1.1s, emblemGlow 2.6s ease-in-out infinite 1.1s;}
+.emblem-line{stroke:var(--gold); stroke-width:4; stroke-dasharray:100; stroke-dashoffset:100; animation:emblemDraw .6s ease .55s forwards;}
+@keyframes emblemDraw{to{stroke-dashoffset:0;}}
+@keyframes emblemSpin{to{transform:rotate(360deg);}}
+@keyframes emblemGlow{0%,100%{filter:drop-shadow(0 0 4px var(--red-bright));} 50%{filter:drop-shadow(0 0 16px var(--red-bright));}}
+.login-brand .logo-emoji{font-size:36px; margin-bottom:0; position:relative; z-index:2; animation:logoPop .5s cubic-bezier(.34,1.56,.64,1) .35s backwards;}
+@keyframes logoPop{0%{transform:scale(0) rotate(-30deg); opacity:0;} 100%{transform:scale(1) rotate(0); opacity:1;}}
+.login-brand h1{font-family:'Oswald'; font-size:24px; letter-spacing:.06em; margin:8px 0 0; animation:fadeIn .5s ease .7s backwards;}
+.login-brand p{font-size:11px; color:var(--muted-2); letter-spacing:.15em; margin-top:4px; font-family:'JetBrains Mono'; animation:fadeIn .5s ease .85s backwards;}
+#loginStep1{animation:fadeIn .5s ease 1s backwards;}
 .member-pick{max-height:260px; overflow-y:auto; margin-bottom:16px;}
 .member-opt{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:var(--radius); margin-bottom:6px; cursor:pointer; transition:.15s;}
 .member-opt:hover{border-color:var(--red-deep); background:var(--panel-2);}
@@ -127,6 +139,7 @@ svg{display:inline-block; vertical-align:middle;}
 .stamp.progress{color:var(--red-bright); border-color:var(--red-bright);}
 .stamp.completed{color:var(--green); border-color:var(--green);}
 .stamp.cancelled{color:var(--grey-status); border-color:var(--grey-status); text-decoration:line-through;}
+.stamp.expired{color:var(--grey-status); border-color:var(--grey-status);}
 .points-badge{position:absolute; top:14px; right:14px; font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:var(--gold); background:rgba(201,162,39,.1); border:1px solid var(--gold); border-radius:20px; padding:3px 10px; display:flex; align-items:center; gap:4px; animation:goldPulse 3s ease-in-out infinite;}
 @keyframes goldPulse{0%,100%{box-shadow:0 0 0 rgba(201,162,39,0);} 50%{box-shadow:0 0 10px rgba(201,162,39,.5);}}
 .case-participants{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
@@ -214,6 +227,7 @@ svg{display:inline-block; vertical-align:middle;}
 </style>
 </head>
 <body>
+<div class="redline-scan"></div>
 
 <div class="full-screen" id="loadingScreen">
   <div class="spinner"></div>
@@ -227,7 +241,13 @@ svg{display:inline-block; vertical-align:middle;}
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <div class="logo-emoji" id="loginLogo">🩸</div>
+      <div class="emblem-wrap">
+        <svg class="brand-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <polygon class="emblem-shape" points="60,10 110,60 60,110 10,60"/>
+          <line class="emblem-line" x1="16" y1="60" x2="104" y2="60"/>
+        </svg>
+        <div class="logo-emoji" id="loginLogo">🩸</div>
+      </div>
       <h1 id="loginOrgName">RED LINE</h1>
       <p id="loginOrgSub">ORGANIZATION OS</p>
     </div>
@@ -324,6 +344,16 @@ svg{display:inline-block; vertical-align:middle;}
         </table>
       </section>
 
+      <section class="view" id="view-contrib">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <div style="color:var(--muted); font-size:13px;">تسجيل مساهمات الأعضاء لهذا الأسبوع (منفصلة عن العمليات) <span id="contribWeekLabel" class="mono" style="color:var(--muted-2); font-size:11px;"></span></div>
+        </div>
+        <table class="table">
+          <thead><tr><th>العضو</th><th>حشيش</th><th>ميث</th><th>كوك</th><th>موارد</th><th>حضور الاجتماعات</th></tr></thead>
+          <tbody id="contribBody"></tbody>
+        </table>
+      </section>
+
       <section class="view" id="view-leaderboard">
         <div class="section-title">
           <span>الترتيب الأسبوعي <span id="weekLabel" class="mono" style="font-size:11px; color:var(--muted-2);"></span></span>
@@ -338,6 +368,8 @@ svg{display:inline-block; vertical-align:middle;}
           <button class="btn btn-primary" id="addCalBtn">+ حدث جديد</button>
         </div>
         <div id="calList"></div>
+        <div class="section-title">تقويم الأسابيع</div>
+        <div id="weeksPanel"></div>
       </section>
 
       <section class="view" id="view-announcements">
@@ -452,7 +484,7 @@ const ICONS = {
   guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
 };
 
-let membersCache=[], opsCache=[], annCache=[], logsCache=[], calCache=[], rolesCache={}, pointsSysCache=[], orgCache={name:"RED LINE", subtitle:"ORGANIZATION OS", logo:"🩸", colorPrimary:"#b3122a", colorSecondary:"#6e0c1c"};
+let membersCache=[], opsCache=[], annCache=[], logsCache=[], calCache=[], rolesCache={}, pointsSysCache=[], contribCache=[], orgCache={name:"RED LINE", subtitle:"ORGANIZATION OS", logo:"🩸", colorPrimary:"#b3122a", colorSecondary:"#6e0c1c"};
 let currentUser = null;
 let appInitialized = false;
 let firstLoadFlags = {members:false, ops:false, ann:false, logs:false, cal:false, roles:false, org:false};
@@ -472,31 +504,34 @@ async function clearSavedSession(){
 }
 
 const REQ_TEMPLATES = {
-  "سرقة سوبر ماركت":[],
-  "سطو منزل":["1x مفتاح شنيور"], "الحاوية":["1x مثقاب ليزر","أسلحة"], "المستودع":["1x جهاز","أسلحة"],
-  "سطو بنك":["2x لابتوب","2x حقيبة","2x جهاز","1x بطاقة فليكا","2x كماشة"],
-  "صرف نقدي":["2x جهاز","2x حقيبة","2x فاحص دائرة","2x هاتف","مفتاح"],
-  "متجر أسلحة":["1x USB اكستروجان","2x حقيبة","2x مفتاح شنيور متقدم","2x كماشة","2x هاتف","2x فاحص دائرة","2x جهاز","سكين"],
-  "صراف آلي":["USB اكستروجان","لحام","مفكات","مثقاب ليزر","حبل نايلون","2x مفتاح شنيور متقدم","2x كماشة"],
-  "بوبكات":["1x بطاقة بوبكات","3x ثيرمايت","2x جهاز","2x هاتف","2x كماشة","2x حقيبة"],
-  "متجر مجوهرات":["أسلحة","3x ثيرمايت","3x جهاز","3x فاحص دائرة","1x شريط بصمة","2x قاطع زجاج","3x حقيبة"],
-  "توصيل حشيش":[], "توصيل ميث":[], "توصيل كوكايين":[],
-  "احتلال منطقة":[], "حرب عصابات":[],
-  "مهمة عامة/خاصة":[], "مهمة سرقة لابتوب":[]
+  "Supermarket Robbery":[],
+  "House Robbery":["Lockpick"], "Container":["1x Laser Drill","Firearms"], "Warehouse":["1x Device","Firearms"],
+  "Bank":["2x Laptop","2x Bag","2x Device","1x Fleeca Card","2x Pliers"],
+  "Cash Exchange":["2x Device","2x Bag","2x Circuit Tester","2x Phone","Key"],
+  "Gun Store":["1x XTROJAN USB","2x Bag","2x Adv. Lockpick","2x Pliers","2x Phone","2x Circuit Tester","2x Device","Knife"],
+  "ATM (XTROJAN USB)":["XTROJAN USB","Blow Torch","Screwdriver Set","Laser Drill","Nylon Rope","2x Adv. Lockpick","2x Pliers"],
+  "Bobcat":["1x Bobcat Card","3x Thermite","2x Device","2x Phone","2x Pliers","2x Bag"],
+  "Jewellery":["Firearms","3x Thermite","3x Device","3x Circuit Tester","1x Fingerprint Tape","2x Glass Cutter","3x Bag"],
+  "Weed Delivery":[], "Meth Delivery":[], "Coke Delivery":[],
+  "Territory Capture":[], "Gang War":[],
+  "General/Special Mission":[], "Laptop Robbery":[]
 };
 const CATEGORY_SLUG = {
-  "سرقة سوبر ماركت":"supermarket", "سطو منزل":"house", "الحاوية":"container", "المستودع":"warehouse",
-  "سطو بنك":"bank", "صرف نقدي":"cashexchange", "متجر أسلحة":"gunstore", "صراف آلي":"atm",
-  "بوبكات":"bobcat", "متجر مجوهرات":"jewelry",
-  "توصيل حشيش":"weed_quota", "توصيل ميث":"meth_quota", "توصيل كوكايين":"coke_quota",
-  "احتلال منطقة":"territory", "حرب عصابات":"gangwar",
-  "مهمة عامة/خاصة":"mission", "مهمة سرقة لابتوب":"laptop_mission"
+  "Supermarket Robbery":"supermarket", "House Robbery":"house", "Container":"container", "Warehouse":"warehouse",
+  "Bank":"bank", "Cash Exchange":"cashexchange", "Gun Store":"gunstore", "ATM (XTROJAN USB)":"atm",
+  "Bobcat":"bobcat", "Jewellery":"jewelry",
+  "Weed Delivery":"weed_quota", "Meth Delivery":"meth_quota", "Coke Delivery":"coke_quota",
+  "Territory Capture":"territory", "Gang War":"gangwar",
+  "General/Special Mission":"mission", "Laptop Robbery":"laptop_mission"
 };
 const CATEGORY_NOTE_HINTS = {
-  "توصيل حشيش":"تسليم 500 كيس خلال 7 أيام",
-  "توصيل ميث":"تسليم 300 كيس خلال 7 أيام",
-  "توصيل كوكايين":"تسليم 500 كيس خلال 7 أيام"
+  "House Robbery":"يحتاج قروب بالجوال",
+  "Weed Delivery":"تسليم 500 كيس خلال 7 أيام",
+  "Meth Delivery":"تسليم 300 كيس خلال 7 أيام",
+  "Coke Delivery":"تسليم 500 كيس خلال 7 أيام"
 };
+/* categories whose points go to the whole gang (org pool) instead of the individual named leader/participants */
+const GANG_WIDE_CATEGORIES = ["Territory Capture", "Gang War", "General/Special Mission"];
 const DEFAULT_POINTS_SYSTEM = [
   {id:"supermarket", label:"سرقة السوبر ماركت", points:2, order:0},
   {id:"house", label:"سرقة المنازل", points:3, order:1},
@@ -534,13 +569,27 @@ const PERM_LABELS = {ops:"العمليات", members:"الأعضاء", points:"�
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function nowStr(){ return new Date().toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}); }
+function formatTime12(t){
+  if(!t) return '—';
+  const [hStr,mStr] = t.split(':');
+  let h = parseInt(hStr,10); const m = mStr||'00';
+  const period = h>=12 ? 'م' : 'ص';
+  h = h % 12; if(h===0) h = 12;
+  return `${h}:${m} ${period}`;
+}
+function getWeekStart(d=new Date()){
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  date.setDate(date.getDate() - date.getDay());
+  return date;
+}
 function getWeekId(d=new Date()){
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = (date.getUTCDay() + 6) % 7;
-  date.setUTCDate(date.getUTCDate() - dayNum + 3);
-  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
-  const weekNum = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay()+6)%7)) / 7);
-  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2,'0')}`;
+  return getWeekStart(d).toISOString().slice(0,10);
+}
+function weekRangeLabel(weekIdStr){
+  const start = new Date(weekIdStr+'T00:00:00');
+  const end = new Date(start); end.setDate(end.getDate()+6);
+  const fmt = dt=>dt.toLocaleDateString('ar-EG',{day:'numeric',month:'short'});
+  return `${fmt(start)} – ${fmt(end)}`;
 }
 let weeklyRolloverDone = false;
 async function checkWeeklyRollover(){
@@ -559,8 +608,13 @@ async function checkWeeklyRollover(){
       }
       await fsSet('members', m.id, {weeklyPoints:0});
     }
-    await fsSet('org','main',{currentWeekId: nowWeek});
-    await addLog(`بدأ أسبوع نقاط جديد (${nowWeek}) — تم أرشفة وتصفير نقاط الأسبوع الماضي`);
+    for(const o of opsCache){
+      if(o.status==='ready' || o.status==='progress'){
+        await fsSet('operations', o.id, {status:'expired'});
+      }
+    }
+    await fsSet('org','main',{currentWeekId: nowWeek, gangWeeklyPoints:0});
+    await addLog(`بدأ أسبوع جديد (${nowWeek}) — تم أرشفة النقاط، تصفير نقاط الأسبوع، وإنهاء العمليات المفتوحة من الأسبوع الماضي`);
   }
 }
 function can(perm){
@@ -688,6 +742,11 @@ function listenAll(){
     firstLoadFlags.logs = true;
     maybeInit(); if(currentUser) renderAll();
   }, err=>fsError(err));
+
+  onSnapshot(query(col('weeklyContributions')), snap=>{
+    contribCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    if(currentUser) renderContributions();
+  }, err=>console.error(err));
 }
 
 function fsError(err){
@@ -843,6 +902,7 @@ const NAV_ITEMS = [
   {view:'operations', label:'العمليات', icon:'ops', perm:null},
   {view:'guide', label:'دليل العمليات', icon:'guide', perm:null},
   {view:'members', label:'الأعضاء', icon:'members', perm:null},
+  {view:'contrib', label:'المساهمات الأسبوعية', icon:'points', perm:null},
   {view:'leaderboard', label:'لوحة الصدارة', icon:'leader', perm:null},
   {view:'calendar', label:'التقويم', icon:'calendar', perm:null},
   {view:'announcements', label:'الإعلانات', icon:'ann', perm:null},
@@ -875,13 +935,13 @@ function renderNav(){
 $('#menuToggle').onclick = ()=> $('#sidebar').classList.toggle('open');
 
 function statusMeta(s){
-  return {ready:{label:'جاهزة', cls:'ready'}, progress:{label:'جارية', cls:'progress'}, completed:{label:'مكتملة', cls:'completed'}, cancelled:{label:'ملغاة', cls:'cancelled'}}[s] || {label:s, cls:'ready'};
+  return {ready:{label:'جاهزة', cls:'ready'}, progress:{label:'جارية', cls:'progress'}, completed:{label:'مكتملة', cls:'completed'}, cancelled:{label:'ملغاة', cls:'cancelled'}, expired:{label:'انتهت', cls:'expired'}}[s] || {label:s, cls:'ready'};
 }
 function emptyHTML(msg){ return `<div class="empty">◇<br>${msg}</div>`; }
 
 function renderAll(){
   renderDashboard(); renderOperations(); renderMembers(); renderLeaderboard();
-  renderCalendar(); renderAnnouncements(); renderLogs(); renderSettings();
+  renderCalendar(); renderAnnouncements(); renderLogs(); renderSettings(); renderContributions();
 }
 
 function renderDashboard(){
@@ -903,7 +963,7 @@ function renderDashboard(){
     {label:'الأعضاء المتصلين', value: online, format:v=>v+' / '+membersCache.length},
     {label:'الأرباح المتوقعة', value: profit, format:v=>'$'+v.toLocaleString()},
     {label:'نسبة النجاح', value: success, format:v=>v+'%'},
-    {label:'إجمالي النقاط', value: totalPoints, format:v=>v}
+    {label:'نقاط العصابة (الأسبوع)', value: Number(orgCache.gangWeeklyPoints)||0, format:v=>v}
   ];
   $('#statGrid').innerHTML = statsDefs.map((s,i)=>`<div class="stat-card" style="animation-delay:${i*30}ms"><div class="stat-num" id="statnum-${i}">0</div><div class="stat-label">${s.label}</div></div>`).join('');
   statsDefs.forEach((s,i)=>{
@@ -940,7 +1000,7 @@ function opCardHTML(o){
     <div class="case-cat" style="margin-top:22px;">${o.category||'—'}</div>
     <div class="case-name">${o.name}</div>
     <div class="case-meta">
-      <div>📅 <b>${o.date||'—'}</b> — ${o.time||'—'}</div>
+      <div>📅 <b>${o.date||'—'}</b> — ${formatTime12(o.time)}</div>
       <div>📍 ${o.location||'—'}</div>
       <div>👤 القائد: <b>${o.leader||'—'}</b></div>
     </div>
@@ -997,7 +1057,7 @@ function openOpDetailsModal(id){
     </div>
     <div class="case-meta" style="margin-bottom:12px;">
       <div>📂 الفئة: <b>${o.category||'—'}</b></div>
-      <div>📅 <b>${o.date||'—'}</b> — ${o.time||'—'}</div>
+      <div>📅 <b>${o.date||'—'}</b> — ${formatTime12(o.time)}</div>
       <div>📍 ${o.location||'—'}</div>
       <div>👤 القائد: <b>${o.leader||'—'}</b></div>
     </div>
@@ -1032,6 +1092,7 @@ function openOpModal(id){
           <option value="progress" ${op&&op.status==='progress'?'selected':''}>جارية</option>
           <option value="completed" ${op&&op.status==='completed'?'selected':''}>مكتملة</option>
           <option value="cancelled" ${op&&op.status==='cancelled'?'selected':''}>ملغاة</option>
+          <option value="expired" ${op&&op.status==='expired'?'selected':''}>انتهت</option>
         </select>
       </div>
     </div>
@@ -1088,15 +1149,8 @@ function openOpModal(id){
       requirements: reqNames
     };
     const alreadyAwarded = !!(op && op.pointsAwarded);
-    if(data.status==='completed' && !alreadyAwarded && data.points>0 && data.leader){
-      const leaderMember = membersCache.find(m=>m.name.trim()===data.leader.trim());
-      if(leaderMember){
-        await fsSet('members', leaderMember.id, {
-          points:(Number(leaderMember.points)||0)+data.points,
-          weeklyPoints:(Number(leaderMember.weeklyPoints)||0)+data.points
-        });
-        await addLog(`تم منح ${data.points} نقطة لـ ${leaderMember.name} عن عملية: ${name}`);
-      }
+    if(!alreadyAwarded && data.points>0){
+      await awardOperationPoints(data, name);
       data.pointsAwarded = true;
     }
     if(id){ await fsSet('operations', id, data); await addLog(`تم تعديل العملية: ${name}`); }
@@ -1105,6 +1159,28 @@ function openOpModal(id){
   };
 }
 $('#addOpBtn').onclick = ()=> openOpModal(null);
+async function awardOperationPoints(data, opName){
+  if(!(data.points > 0)) return;
+  if(GANG_WIDE_CATEGORIES.includes(data.category)){
+    await fsSet('org','main',{
+      gangPoints:(Number(orgCache.gangPoints)||0)+data.points,
+      gangWeeklyPoints:(Number(orgCache.gangWeeklyPoints)||0)+data.points
+    });
+    await addLog(`تم منح ${data.points} نقطة للعصابة كاملة عن: ${opName}`);
+  }else{
+    const names = [...new Set([data.leader, ...(data.participants||[])].map(n=>(n||'').trim()).filter(Boolean))];
+    for(const n of names){
+      const member = membersCache.find(m=>m.name.trim()===n);
+      if(member){
+        await fsSet('members', member.id, {
+          points:(Number(member.points)||0)+data.points,
+          weeklyPoints:(Number(member.weeklyPoints)||0)+data.points
+        });
+        await addLog(`تم منح ${data.points} نقطة لـ ${member.name} عن: ${opName}`);
+      }
+    }
+  }
+}
 function openGuideModal(){
   const cats = Object.keys(REQ_TEMPLATES);
   openModal(`
@@ -1204,6 +1280,34 @@ function openMemberModal(id){
 }
 
 $('#addMemberBtn').onclick = ()=> openMemberModal(null);
+function renderContributions(){
+  const tbody = $('#contribBody');
+  if(!tbody) return;
+  const weekId = orgCache.currentWeekId || getWeekId();
+  $('#contribWeekLabel').textContent = `(${weekRangeLabel(weekId)})`;
+  const editable = can('members');
+  tbody.innerHTML = membersCache.map(m=>{
+    const rec = contribCache.find(c=>c.weekId===weekId && c.memberId===m.id) || {};
+    return `<tr>
+      <td><span class="avatar">${(m.name||'?').trim()[0]||'?'}</span>${m.name}</td>
+      <td><input type="checkbox" class="contrib-cb" data-mid="${m.id}" data-field="weed" ${rec.weed?'checked':''} ${editable?'':'disabled'} style="width:18px; height:18px; accent-color:var(--green);"></td>
+      <td><input type="checkbox" class="contrib-cb" data-mid="${m.id}" data-field="meth" ${rec.meth?'checked':''} ${editable?'':'disabled'} style="width:18px; height:18px; accent-color:var(--amber);"></td>
+      <td><input type="checkbox" class="contrib-cb" data-mid="${m.id}" data-field="coke" ${rec.coke?'checked':''} ${editable?'':'disabled'} style="width:18px; height:18px; accent-color:var(--ink);"></td>
+      <td><input type="checkbox" class="contrib-cb" data-mid="${m.id}" data-field="resources" ${rec.resources?'checked':''} ${editable?'':'disabled'} style="width:18px; height:18px; accent-color:var(--gold);"></td>
+      <td><input type="number" min="0" class="contrib-num" data-mid="${m.id}" value="${rec.meetings||0}" ${editable?'':'disabled'} style="width:60px; background:var(--panel-2); border:1px solid var(--line); color:var(--ink); border-radius:4px; padding:4px 6px;"></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6">${emptyHTML('لا يوجد أعضاء بعد')}</td></tr>`;
+  if(editable){
+    $$('.contrib-cb').forEach(cb=>cb.onchange=async ()=>{
+      const m = membersCache.find(x=>x.id===cb.dataset.mid);
+      await fsSet('weeklyContributions', `${weekId}_${cb.dataset.mid}`, {weekId, memberId:cb.dataset.mid, name:m?m.name:'', [cb.dataset.field]: cb.checked});
+    });
+    $$('.contrib-num').forEach(inp=>inp.onchange=async ()=>{
+      const m = membersCache.find(x=>x.id===inp.dataset.mid);
+      await fsSet('weeklyContributions', `${weekId}_${inp.dataset.mid}`, {weekId, memberId:inp.dataset.mid, name:m?m.name:'', meetings:Number(inp.value)||0});
+    });
+  }
+}
 function renderLeaderboard(){
   $('#weekLabel').textContent = orgCache.currentWeekId ? `(${orgCache.currentWeekId})` : '';
   const sorted = [...membersCache].sort((a,b)=>(b.weeklyPoints||0)-(a.weeklyPoints||0));
@@ -1241,7 +1345,7 @@ $('#archiveBtn').onclick = async ()=>{
 
 function calRowHTML(c){
   return `<div class="cal-row">
-    <span class="cal-date mono">${c.date||'—'} ${c.time||''}</span>
+    <span class="cal-date mono">${c.date||'—'} ${formatTime12(c.time)}</span>
     <div style="flex:1;">${c.title}</div>
     ${can('cal')?`<button class="btn btn-sm btn-danger del-cal" data-id="${c.id}">حذف</button>`:''}
   </div>`;
@@ -1253,6 +1357,31 @@ function renderCalendar(){
   $$('.del-cal').forEach(b=>b.onclick=async ()=>{
     if(confirm('حذف هذا الحدث؟')) await fsDelete('calendarEvents', b.dataset.id);
   });
+  renderWeeksPanel();
+}
+let weeksPanelLoaded = false;
+async function renderWeeksPanel(){
+  const container = $('#weeksPanel');
+  if(!container) return;
+  const rows = [];
+  if(orgCache.currentWeekId){
+    rows.push(`<div class="cal-row"><span class="cal-date mono">${weekRangeLabel(orgCache.currentWeekId)}</span><div style="flex:1;">الأسبوع الحالي</div><span class="rank-badge" style="color:var(--green); border-color:var(--green);">جارٍ ⏳</span></div>`);
+  }
+  if(weeksPanelLoaded){
+    container.innerHTML = rows.join('') || emptyHTML('لا يوجد أسابيع بعد');
+  }
+  try{
+    const snap = await getDocs(col('weeklyArchive'));
+    const weekIds = [...new Set(snap.docs.map(d=>d.data().weekId))].filter(w=>w!==orgCache.currentWeekId).sort().reverse();
+    weekIds.forEach(w=>{
+      rows.push(`<div class="cal-row"><span class="cal-date mono">${weekRangeLabel(w)}</span><div style="flex:1;">الأسبوع ${w}</div><span class="rank-badge" style="color:var(--grey-status); border-color:var(--grey-status);">انتهى ✅</span></div>`);
+    });
+    weeksPanelLoaded = true;
+    container.innerHTML = rows.length ? rows.join('') : emptyHTML('لا يوجد أسابيع بعد');
+  }catch(e){
+    console.error(e);
+    if(!weeksPanelLoaded) container.innerHTML = rows.join('') || emptyHTML('تعذر تحميل الأرشيف');
+  }
 }
 $('#addCalBtn').onclick = ()=>{
   openModal(`
