@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RED LINE — نظام إدارة المنظمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0808; --bg-2:#120d0e; --panel:#171112; --panel-2:#1e1516;
+  --line:#2c1e1f; --line-soft:#241819;
+  --red:#b3122a; --red-deep:#6e0c1c; --red-bright:#e42d46;
+  --ink:#f0e6e4; --muted:#9a8a89; --muted-2:#6f6060;
+  --gold:#c9a227; --green:#3fae6a; --amber:#d99a2b; --grey-status:#7a7070;
+  --radius:3px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(179,18,42,.16), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(179,18,42,.08), transparent 55%),
+    var(--bg);
+  color:var(--ink); font-family:'Tajawal',sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+.display{font-family:'Oswald','Tajawal',sans-serif; text-transform:uppercase; letter-spacing:.04em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+svg{display:inline-block; vertical-align:middle;}
+
+.full-screen{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; background:var(--bg); z-index:200; text-align:center; padding:20px;}
+.spinner{width:34px; height:34px; border:3px solid var(--line); border-top-color:var(--red); border-radius:50%; animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-box{max-width:480px; background:var(--panel); border:1px solid var(--red-deep); border-radius:6px; padding:22px; font-size:13px; color:var(--muted); line-height:1.8;}
+.error-box b{color:var(--red-bright);}
+.error-box code{background:var(--panel-2); padding:2px 6px; border-radius:3px; color:var(--ink); font-family:'JetBrains Mono';}
+
+#loginScreen{position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; background:
+  radial-gradient(ellipse 800px 600px at 50% 0%, rgba(179,18,42,.18), transparent 60%), var(--bg);}
+#loginScreen.active{display:flex;}
+.login-card{width:380px; max-width:92vw; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:30px 26px; box-shadow:0 30px 80px rgba(0,0,0,.5); animation:fadeIn .4s ease;}
+.login-brand{text-align:center; margin-bottom:22px;}
+.login-brand .logo-emoji{font-size:38px; margin-bottom:6px;}
+.login-brand h1{font-family:'Oswald'; font-size:24px; letter-spacing:.06em; margin:0;}
+.login-brand p{font-size:11px; color:var(--muted-2); letter-spacing:.15em; margin-top:4px; font-family:'JetBrains Mono';}
+.member-pick{max-height:260px; overflow-y:auto; margin-bottom:16px;}
+.member-opt{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:var(--radius); margin-bottom:6px; cursor:pointer; transition:.15s;}
+.member-opt:hover{border-color:var(--red-deep); background:var(--panel-2);}
+.member-opt .rank-badge{margin-right:auto;}
+
+.app{display:none; min-height:100vh;}
+.app.active{display:flex; animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+.sidebar{width:235px; flex-shrink:0; background:linear-gradient(180deg, var(--bg-2), var(--bg)); border-left:1px solid var(--line); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; z-index:20;}
+.brand{padding:20px 18px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px;}
+.brand-bar{width:5px; height:32px; background:var(--red); box-shadow:0 0 12px var(--red); border-radius:2px;}
+.brand-name{font-family:'Oswald'; font-size:20px; letter-spacing:.05em; color:var(--ink); line-height:1.15;}
+.brand-name b{color:var(--red-bright);}
+.brand-sub{font-size:10px; color:var(--muted-2); letter-spacing:.15em; margin-top:4px; font-family:'JetBrains Mono';}
+.brand-logo{font-size:22px;}
+
+.who{display:flex; align-items:center; gap:8px; padding:12px 18px; border-bottom:1px solid var(--line); font-size:12px;}
+.who .avatar{width:26px; height:26px; font-size:11px;}
+
+.nav{padding:12px 10px; flex:1; overflow-y:auto;}
+.nav-group-label{font-size:10px; color:var(--muted-2); letter-spacing:.15em; padding:12px 10px 6px; font-family:'JetBrains Mono';}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:2px; border-radius:var(--radius); cursor:pointer; color:var(--muted); font-size:13.5px; font-weight:500; border-right:2px solid transparent; transition:.15s; user-select:none;}
+.nav-item:hover{background:var(--panel); color:var(--ink);}
+.nav-item.active{background:linear-gradient(90deg, rgba(179,18,42,.18), transparent); color:var(--ink); border-right-color:var(--red);}
+.nav-item svg{width:16px; height:16px; opacity:.85; flex-shrink:0;}
+.sidebar-foot{padding:12px 18px; border-top:1px solid var(--line); font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono'; display:flex; justify-content:space-between; align-items:center;}
+.sync-dot{width:7px; height:7px; border-radius:50%; display:inline-block; margin-left:5px;}
+.sync-dot.on{background:var(--green); box-shadow:0 0 6px var(--green);}
+.sync-dot.saving{background:var(--amber); animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.logout-btn{cursor:pointer; color:var(--muted); font-size:11px;}
+.logout-btn:hover{color:var(--red-bright);}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--line); background:rgba(10,8,8,.75); backdrop-filter:blur(6px); position:sticky; top:0; z-index:10;}
+.topbar-title{font-family:'Oswald'; font-size:19px; letter-spacing:.03em; display:flex; align-items:center; gap:10px;}
+.topbar-actions{display:flex; gap:10px; align-items:center;}
+.search{background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:8px 12px; border-radius:var(--radius); font-size:13px; width:210px; font-family:'Tajawal';}
+.search:focus{outline:none; border-color:var(--red);}
+.content{padding:24px 28px 60px; flex:1;}
+.view{display:none;}
+.view.active{display:block; animation:fadeIn .25s ease;}
+
+.btn{background:var(--panel-2); border:1px solid var(--line); color:var(--ink); padding:9px 16px; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; font-family:'Tajawal'; transition:.15s; display:inline-flex; align-items:center; gap:6px;}
+.btn:hover{border-color:var(--muted-2); transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(180deg, var(--red), var(--red-deep)); border-color:var(--red-deep); box-shadow:0 2px 10px rgba(179,18,42,.35);}
+.btn-primary:hover{background:linear-gradient(180deg, var(--red-bright), var(--red));}
+.btn-ghost{background:transparent; border-color:var(--line);}
+.btn-danger{color:#ff8686; border-color:#4a1a1a;}
+.btn-sm{padding:6px 10px; font-size:12px;}
+.btn[disabled]{opacity:.4; cursor:not-allowed; transform:none !important;}
+.btn svg{width:14px; height:14px;}
+
+.stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:12px; margin-bottom:22px;}
+.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 18px; position:relative; overflow:hidden; animation:fadeIn .3s ease backwards;}
+.stat-card::before{content:''; position:absolute; right:0; top:0; bottom:0; width:3px; background:var(--red);}
+.stat-num{font-family:'JetBrains Mono'; font-size:27px; font-weight:700; color:var(--ink); line-height:1;}
+.stat-label{font-size:11px; color:var(--muted); margin-top:6px;}
+
+.section-title{font-family:'Oswald'; font-size:15px; letter-spacing:.06em; color:var(--ink); margin:26px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+
+.case-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px;}
+.case{background:repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(255,255,255,.012) 28px), var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 16px 14px; position:relative; transition:.15s; animation:fadeIn .35s ease backwards;}
+.case:hover{border-color:var(--red-deep); transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.4);}
+.case-cat{font-size:10px; color:var(--muted-2); font-family:'JetBrains Mono'; letter-spacing:.1em;}
+.case-name{font-family:'Oswald'; font-size:18px; margin:4px 0 8px; color:var(--ink);}
+.case-meta{font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
+.case-meta b{color:var(--ink); font-weight:600;}
+.case-req{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;}
+.chip{font-size:10px; background:var(--panel-2); border:1px solid var(--line-soft); padding:3px 8px; border-radius:20px; color:var(--muted); font-family:'JetBrains Mono'; cursor:pointer; user-select:none;}
+.chip.have{color:var(--green); border-color:var(--green);}
+.stamp{position:absolute; top:14px; left:14px; font-family:'Oswald'; font-size:11px; font-weight:700; letter-spacing:.1em; padding:4px 10px; border:2px solid; border-radius:3px; transform:rotate(-8deg); opacity:.92;}
+.stamp.ready{color:var(--amber); border-color:var(--amber);}
+.stamp.progress{color:var(--red-bright); border-color:var(--red-bright);}
+.stamp.completed{color:var(--green); border-color:var(--green);}
+.stamp.cancelled{color:var(--grey-status); border-color:var(--grey-status); text-decoration:line-through;}
+.case-foot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line-soft);}
+.case-points{font-family:'JetBrains Mono'; font-size:12px; color:var(--gold);}
+
+.table{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+.table th{text-align:right; font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.06em; padding:12px 14px; border-bottom:1px solid var(--line); font-family:'JetBrains Mono'; font-weight:500;}
+.table td{padding:12px 14px; border-bottom:1px solid var(--line-soft); font-size:13px; vertical-align:middle;}
+.table tr:last-child td{border-bottom:none;}
+.table tr:hover{background:var(--panel-2);}
+.avatar{width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, var(--red), var(--red-deep)); display:inline-flex; align-items:center; justify-content:center; font-family:'Oswald'; font-size:13px; color:#fff; margin-left:10px; flex-shrink:0;}
+.rank-badge{font-size:10px; padding:3px 9px; border-radius:20px; font-family:'JetBrains Mono'; letter-spacing:.05em; border:1px solid var(--line-soft); color:var(--muted);}
+.status-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-left:6px;}
+.status-dot.on{background:var(--green); box-shadow:0 0 6px var(--green);}
+.status-dot.off{background:var(--muted-2);}
+
+.leader-row{display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--panel); border:1px solid var(--line); border-radius:6px; margin-bottom:8px; animation:fadeIn .3s ease backwards;}
+.leader-rank{font-family:'Oswald'; font-size:20px; width:34px; text-align:center; color:var(--muted-2);}
+.leader-row:nth-child(1) .leader-rank{color:var(--gold);}
+.leader-row:nth-child(2) .leader-rank{color:#c7c7c7;}
+.leader-row:nth-child(3) .leader-rank{color:#c98a4b;}
+.leader-name{flex:1; font-weight:600;}
+.leader-points{font-family:'JetBrains Mono'; color:var(--gold); font-size:14px;}
+
+.ann{background:var(--panel); border:1px solid var(--line); border-right:3px solid var(--red); border-radius:6px; padding:14px 16px; margin-bottom:10px;}
+.ann-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;}
+.ann-title{font-family:'Oswald'; font-size:15px;}
+.ann-date{font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono';}
+.ann-body{font-size:13px; color:var(--muted); line-height:1.7;}
+.pin{color:var(--gold); font-size:11px;}
+
+.cal-row{display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--panel); border:1px solid var(--line); border-radius:6px; margin-bottom:6px;}
+.cal-date{font-family:'JetBrains Mono'; font-size:12px; color:var(--red-bright); background:var(--panel-2); padding:4px 8px; border-radius:4px;}
+
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:100;}
+.overlay.active{display:flex;}
+.modal{background:var(--panel); border:1px solid var(--line); border-radius:6px; width:480px; max-width:92vw; max-height:86vh; overflow-y:auto; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.5); animation:fadeIn .2s ease;}
+.modal h3{font-family:'Oswald'; margin:0 0 16px; font-size:18px; border-bottom:1px solid var(--line); padding-bottom:12px;}
+.field{margin-bottom:12px;}
+.field label{display:block; font-size:11px; color:var(--muted); margin-bottom:5px;}
+.field input, .field select, .field textarea{width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--ink); padding:9px 10px; border-radius:var(--radius); font-size:13px; font-family:'Tajawal';}
+.field input[type=color]{padding:3px; height:38px; cursor:pointer;}
+.field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--red);}
+.field textarea{resize:vertical; min-height:70px;}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.modal-actions{display:flex; justify-content:flex-start; gap:8px; margin-top:18px; padding-top:14px; border-top:1px solid var(--line);}
+.req-row{display:flex; gap:6px; margin-bottom:6px; align-items:center;}
+.req-row input{flex:1;}
+
+.empty{text-align:center; padding:50px 20px; color:var(--muted-2);}
+.settings-tabs{display:flex; gap:4px; margin-bottom:18px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
+.stab{padding:10px 16px; font-size:13px; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent;}
+.stab.active{color:var(--ink); border-color:var(--red);}
+.settings-pane{display:none;}
+.settings-pane.active{display:block; animation:fadeIn .2s ease;}
+.settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:700px;}
+.toggle-row{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--line-soft); max-width:700px;}
+.perm-table{width:100%; border-collapse:collapse; max-width:900px;}
+.perm-table th, .perm-table td{padding:8px 10px; font-size:12px; text-align:center; border-bottom:1px solid var(--line-soft);}
+.perm-table th:first-child, .perm-table td:first-child{text-align:right;}
+.perm-table input[type=checkbox]{width:16px; height:16px; accent-color:var(--red);}
+
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-track{background:var(--bg-2);}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:var(--red-deep);}
+
+.toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--panel); border:1px solid var(--line); border-right:3px solid var(--red); padding:10px 18px; border-radius:6px; font-size:13px; z-index:300; opacity:0; transition:.3s; pointer-events:none;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+@media(max-width:900px){
+  .sidebar{position:fixed; right:-235px; transition:.2s; box-shadow:0 0 30px rgba(0,0,0,.5);}
+  .sidebar.open{right:0;}
+  .menu-toggle{display:inline-flex !important;}
+  .search{width:130px;}
+  .settings-grid{grid-template-columns:1fr;}
+}
+.menu-toggle{display:none; background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:8px 10px; border-radius:var(--radius); cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="full-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="mono" style="color:var(--muted); font-size:13px;">جاري الاتصال بقاعدة البيانات...</div>
+</div>
+
+<div class="full-screen" id="errorScreen" style="display:none;">
+  <div class="error-box" id="errorBoxText"></div>
+</div>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo-emoji" id="loginLogo">🩸</div>
+      <h1 id="loginOrgName">RED LINE</h1>
+      <p id="loginOrgSub">ORGANIZATION OS</p>
+    </div>
+    <div id="loginStep1">
+      <div class="field"><label>اختر اسمك</label></div>
+      <div class="member-pick" id="memberPick"></div>
+      <button class="btn btn-ghost" style="width:100%; justify-content:center;" id="newMemberToggle">+ لست عضوًا بعد؟ سجل اسمك</button>
+    </div>
+    <div id="loginStep2" style="display:none;">
+      <div class="field"><label>الرمز السري (PIN)</label><input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="****"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" style="flex:1; justify-content:center;" id="pinSubmit">دخول</button>
+        <button class="btn btn-ghost" id="pinBack">رجوع</button>
+      </div>
+      <div id="loginError" style="color:var(--red-bright); font-size:12px; margin-top:10px; display:none;"></div>
+    </div>
+    <div id="loginStep3" style="display:none;">
+      <div class="field"><label>اسمك</label><input id="newMemberName"></div>
+      <div class="field"><label>أنشئ رمز PIN (4 أرقام)</label><input id="newMemberPin" type="password" inputmode="numeric" maxlength="6"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" style="flex:1; justify-content:center;" id="registerSubmit">تسجيل</button>
+        <button class="btn btn-ghost" id="registerBack">رجوع</button>
+      </div>
+      <div id="registerError" style="color:var(--red-bright); font-size:12px; margin-top:10px; display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appRoot">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-bar"></div>
+      <div>
+        <div class="brand-name"><span class="brand-logo" id="sideLogo">🩸</span> <span id="sideOrgName">RED LINE</span></div>
+        <div class="brand-sub" id="sideOrgSub">ORGANIZATION OS</div>
+      </div>
+    </div>
+    <div class="who">
+      <span class="avatar" id="whoAvatar">?</span>
+      <div style="flex:1;">
+        <div id="whoName" style="font-weight:600;">—</div>
+        <div id="whoRank" class="rank-badge" style="margin-top:2px;">—</div>
+      </div>
+      <span class="logout-btn" id="changePinBtn" title="تغيير الرمز السري">🔑</span>
+    </div>
+    <nav class="nav" id="navList"></nav>
+    <div class="sidebar-foot">
+      <span>مباشر <span class="sync-dot on" id="syncDot"></span></span>
+      <span class="logout-btn" id="logoutBtn">خروج</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <div class="topbar-title" id="viewTitle">لوحة التحكم</div>
+      </div>
+      <div class="topbar-actions">
+        <input class="search" id="globalSearch" placeholder="بحث في العمليات...">
+      </div>
+    </div>
+
+    <div class="content">
+      <section class="view active" id="view-dashboard">
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="section-title">أحدث العمليات</div>
+        <div class="case-grid" id="recentOps"></div>
+        <div class="section-title">أحداث قادمة</div>
+        <div id="dashCal"></div>
+        <div class="section-title">آخر الإعلانات</div>
+        <div id="recentAnn"></div>
+      </section>
+
+      <section class="view" id="view-operations">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <div style="color:var(--muted); font-size:13px;">إدارة جميع عمليات المنظمة ومتطلباتها</div>
+          <button class="btn btn-primary" id="addOpBtn">+ عملية جديدة</button>
+        </div>
+        <div class="case-grid" id="opsGrid"></div>
+      </section>
+
+      <section class="view" id="view-members">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <div style="color:var(--muted); font-size:13px;">جميع أعضاء المنظمة ورتبهم ونقاطهم</div>
+          <button class="btn btn-primary" id="addMemberBtn">+ عضو جديد</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>العضو</th><th>الرتبة</th><th>النقاط</th><th>الحالة</th><th>آخر ظهور</th><th></th></tr></thead>
+          <tbody id="membersBody"></tbody>
+        </table>
+      </section>
+
+      <section class="view" id="view-leaderboard">
+        <div class="section-title">الترتيب حسب النقاط</div>
+        <div id="leaderList"></div>
+      </section>
+
+      <section class="view" id="view-calendar">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="color:var(--muted); font-size:13px;">مواعيد الاجتماعات والعمليات المجدولة</div>
+          <button class="btn btn-primary" id="addCalBtn">+ حدث جديد</button>
+        </div>
+        <div id="calList"></div>
+      </section>
+
+      <section class="view" id="view-announcements">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="color:var(--muted); font-size:13px;">إعلانات وتنبيهات المنظمة</div>
+          <button class="btn btn-primary" id="addAnnBtn">+ إعلان جديد</button>
+        </div>
+        <div id="annList"></div>
+      </section>
+
+      <section class="view" id="view-logs">
+        <div class="section-title">سجل النشاط الكامل</div>
+        <div id="logsList"></div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="settings-tabs">
+          <div class="stab active" data-pane="general">عام</div>
+          <div class="stab" data-pane="theme">المظهر</div>
+          <div class="stab" data-pane="roles">الأدوار والصلاحيات</div>
+          <div class="stab" data-pane="danger">إدارة البيانات</div>
+        </div>
+
+        <div class="settings-pane active" id="pane-general">
+          <div class="settings-grid">
+            <div class="field"><label>اسم المنظمة</label><input id="setOrgName"></div>
+            <div class="field"><label>وصف قصير</label><input id="setOrgSub"></div>
+            <div class="field"><label>شعار المنظمة (رمز تعبيري)</label><input id="setOrgLogo" maxlength="4"></div>
+          </div>
+          <button class="btn btn-primary" id="saveGeneralBtn" style="margin-top:6px;">حفظ</button>
+        </div>
+
+        <div class="settings-pane" id="pane-theme">
+          <div class="settings-grid">
+            <div class="field"><label>اللون الأساسي</label><input id="setColorPrimary" type="color"></div>
+            <div class="field"><label>اللون الثانوي (الأغمق)</label><input id="setColorSecondary" type="color"></div>
+          </div>
+          <button class="btn btn-primary" id="saveThemeBtn" style="margin-top:6px;">حفظ المظهر</button>
+        </div>
+
+        <div class="settings-pane" id="pane-roles">
+          <div style="overflow-x:auto;">
+            <table class="perm-table" id="permTable"></table>
+          </div>
+          <button class="btn btn-primary" id="savePermsBtn" style="margin-top:14px;">حفظ الصلاحيات</button>
+        </div>
+
+        <div class="settings-pane" id="pane-danger">
+          <div class="toggle-row">
+            <div>
+              <div style="font-weight:600; font-size:13px;">إعادة تعيين جميع البيانات</div>
+              <div style="font-size:12px; color:var(--muted-2);">حذف جميع العمليات والإعلانات والأحداث نهائيًا (الأعضاء لا يُحذفون)</div>
+            </div>
+            <button class="btn btn-danger btn-sm" id="resetDataBtn">إعادة تعيين</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc,
+  onSnapshot, getDoc, getDocs, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAcGc3q9nOLOyCOrUzwgfkR8UUvqAv1Z9M",
+  authDomain: "redll-989e4.firebaseapp.com",
+  projectId: "redll-989e4",
+  storageBucket: "redll-989e4.firebasestorage.app",
+  messagingSenderId: "238422669438",
+  appId: "1:238422669438:web:8866bec2e0d1d6366e802f"
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+let app, auth, db;
+try{
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+}catch(e){
+  showFatal("تعذّر تهيئة Firebase. تأكد من صحة بيانات الإعداد (firebaseConfig).", e);
+}
+
+function showFatal(msg, err){
+  $('#loadingScreen').style.display='none';
+  $('#errorScreen').style.display='flex';
+  $('#errorBoxText').innerHTML = `<b>خطأ في الاتصال</b><br><br>${msg}${err?`<br><br><code>${(err.code||err.message||err)}</code>`:''}`;
+}
+
+const ICONS = {
+  dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
+  ops:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>',
+  members:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2"/><circle cx="17" cy="8" r="2.5"/><path d="M21 21v-1.5a4 4 0 0 0-3-3.87"/></svg>',
+  leader:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 5.5L20 8l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.5z"/></svg>',
+  calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  ann:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11v3a2 2 0 0 0 2 2h1l3 4v-4h6l3-9-9-3-9 3z"/></svg>',
+  logs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.42.7.7 1.19.7H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  points:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 9l9 13 9-13-9-7z"/><path d="M3 9h18M9 9l3-7 3 7M9 9l3 13 3-13"/></svg>'
+};
+
+let membersCache=[], opsCache=[], annCache=[], logsCache=[], calCache=[], rolesCache={}, pointsSysCache=[], orgCache={name:"RED LINE", subtitle:"ORGANIZATION OS", logo:"🩸", colorPrimary:"#b3122a", colorSecondary:"#6e0c1c"};
+let currentUser = null;
+let appInitialized = false;
+let firstLoadFlags = {members:false, ops:false, ann:false, logs:false, cal:false, roles:false, org:false};
+
+const SESSION_KEY = 'redline_session_member_id';
+async function getSavedSession(){
+  try{
+    const res = await window.storage.get(SESSION_KEY, false);
+    return res ? res.value : null;
+  }catch(e){ return null; }
+}
+async function setSavedSession(id){
+  try{ await window.storage.set(SESSION_KEY, id, false); }catch(e){ /* storage unavailable, session just won't persist */ }
+}
+async function clearSavedSession(){
+  try{ await window.storage.delete(SESSION_KEY, false); }catch(e){}
+}
+
+const REQ_TEMPLATES = {
+  "سرقة سوبر ماركت":[],
+  "سطو منزل":["1x مفتاح شنيور"], "الحاوية":["1x مثقاب ليزر","أسلحة"], "المستودع":["1x جهاز","أسلحة"],
+  "سطو بنك":["2x لابتوب","2x حقيبة","2x جهاز","1x بطاقة فليكا","2x كماشة"],
+  "صرف نقدي":["2x جهاز","2x حقيبة","2x فاحص دائرة","2x هاتف","مفتاح"],
+  "متجر أسلحة":["1x USB اكستروجان","2x حقيبة","2x مفتاح شنيور متقدم","2x كماشة","2x هاتف","2x فاحص دائرة","2x جهاز","سكين"],
+  "صراف آلي":["USB اكستروجان","لحام","مفكات","مثقاب ليزر","حبل نايلون","2x مفتاح شنيور متقدم","2x كماشة"],
+  "بوبكات":["1x بطاقة بوبكات","3x ثيرمايت","2x جهاز","2x هاتف","2x كماشة","2x حقيبة"],
+  "متجر مجوهرات":["أسلحة","3x ثيرمايت","3x جهاز","3x فاحص دائرة","1x شريط بصمة","2x قاطع زجاج","3x حقيبة"],
+  "توصيل حشيش":[], "توصيل ميث":[], "توصيل كوكايين":[],
+  "احتلال منطقة":[], "حرب عصابات":[],
+  "مهمة عامة/خاصة":[], "مهمة سرقة لابتوب":[]
+};
+const CATEGORY_SLUG = {
+  "سرقة سوبر ماركت":"supermarket", "سطو منزل":"house", "الحاوية":"container", "المستودع":"warehouse",
+  "سطو بنك":"bank", "صرف نقدي":"cashexchange", "متجر أسلحة":"gunstore", "صراف آلي":"atm",
+  "بوبكات":"bobcat", "متجر مجوهرات":"jewelry",
+  "توصيل حشيش":"weed_quota", "توصيل ميث":"meth_quota", "توصيل كوكايين":"coke_quota",
+  "احتلال منطقة":"territory", "حرب عصابات":"gangwar",
+  "مهمة عامة/خاصة":"mission", "مهمة سرقة لابتوب":"laptop_mission"
+};
+const CATEGORY_NOTE_HINTS = {
+  "توصيل حشيش":"تسليم 500 كيس خلال 7 أيام",
+  "توصيل ميث":"تسليم 300 كيس خلال 7 أيام",
+  "توصيل كوكايين":"تسليم 500 كيس خلال 7 أيام"
+};
+const DEFAULT_POINTS_SYSTEM = [
+  {id:"supermarket", label:"سرقة السوبر ماركت", points:2, order:0},
+  {id:"house", label:"سرقة المنازل", points:3, order:1},
+  {id:"gunstore", label:"سرقة متجر الأسلحة", points:5, order:2},
+  {id:"bank", label:"سرقة البنوك", points:5, order:3},
+  {id:"jewelry", label:"سرقة محل المجوهرات", points:6, order:4},
+  {id:"bobcat", label:"سرقة البوبكات", points:7, order:5},
+  {id:"container", label:"سرقة الحاوية", points:4, order:6},
+  {id:"warehouse", label:"سرقة المستودع", points:4, order:7},
+  {id:"cashexchange", label:"صرف نقدي", points:4, order:8},
+  {id:"atm", label:"صراف آلي", points:4, order:9},
+  {id:"weed_quota", label:"تسليم أسبوعي — حشيش (500 كيس / 7 أيام)", points:20, order:10},
+  {id:"meth_quota", label:"تسليم أسبوعي — ميث (300 كيس / 7 أيام)", points:20, order:11},
+  {id:"coke_quota", label:"تسليم أسبوعي — كوكايين (500 كيس / 7 أيام)", points:20, order:12},
+  {id:"territory", label:"نظام احتلال المناطق", points:3, order:13},
+  {id:"gangwar", label:"حرب العصابات", points:10, order:14},
+  {id:"mission", label:"مهمة عامة / خاصة", points:5, order:15},
+  {id:"laptop_mission", label:"مهمة سرقة لابتوب", points:2, order:16}
+];
+/* category name -> points, derived from CATEGORY_SLUG + DEFAULT_POINTS_SYSTEM, used to suggest & auto-award points */
+const POINTS_BY_CATEGORY = {};
+Object.keys(CATEGORY_SLUG).forEach(cat=>{
+  const sys = DEFAULT_POINTS_SYSTEM.find(p=>p.id===CATEGORY_SLUG[cat]);
+  POINTS_BY_CATEGORY[cat] = sys ? sys.points : 0;
+});
+const DEFAULT_ROLES = {
+  owner:{label:"Owner", order:0, perms:{ops:true, members:true, points:true, ann:true, cal:true, settings:true, roles:true, logs:true}},
+  deputy:{label:"Deputy Owner", order:1, perms:{ops:true, members:true, points:true, ann:true, cal:true, settings:true, roles:false, logs:true}},
+  leader:{label:"Leader", order:2, perms:{ops:true, members:false, points:false, ann:true, cal:true, settings:false, roles:false, logs:true}},
+  supervisor:{label:"Supervisor", order:3, perms:{ops:true, members:false, points:false, ann:false, cal:false, settings:false, roles:false, logs:false}},
+  member:{label:"Member", order:4, perms:{ops:false, members:false, points:false, ann:false, cal:false, settings:false, roles:false, logs:false}},
+  guest:{label:"Guest", order:5, perms:{ops:false, members:false, points:false, ann:false, cal:false, settings:false, roles:false, logs:false}}
+};
+const PERM_LABELS = {ops:"العمليات", members:"الأعضاء", points:"النقاط", ann:"الإعلانات", cal:"التقويم", settings:"الإعدادات", roles:"الأدوار", logs:"سجل النشاط"};
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function nowStr(){ return new Date().toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}); }
+function can(perm){
+  if(!currentUser) return false;
+  const role = rolesCache[currentUser.rank];
+  return !!(role && role.perms && role.perms[perm]);
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function setSyncState(state){
+  const dot = $('#syncDot');
+  dot.className = 'sync-dot ' + (state==='saving' ? 'saving' : 'on');
+}
+
+const col = name => collection(db, name);
+async function addLog(text){
+  try{ await addDoc(col('logs'), {text, date: nowStr(), ts: Date.now()}); }catch(e){ console.error(e); }
+}
+async function fsSet(collName, id, data){
+  setSyncState('saving');
+  try{
+    await setDoc(doc(db, collName, id), data, {merge:true});
+    setSyncState('on');
+  }catch(e){
+    setSyncState('on');
+    toast('⚠ فشل الحفظ: تحقق من صلاحيات Firestore');
+    console.error(e);
+  }
+}
+async function fsAdd(collName, data){
+  setSyncState('saving');
+  try{
+    const ref = await addDoc(col(collName), data);
+    setSyncState('on');
+    return ref.id;
+  }catch(e){
+    setSyncState('on');
+    toast('⚠ فشل الحفظ: تحقق من صلاحيات Firestore');
+    console.error(e);
+  }
+}
+async function fsDelete(collName, id){
+  setSyncState('saving');
+  try{ await deleteDoc(doc(db, collName, id)); setSyncState('on'); }
+  catch(e){ setSyncState('on'); toast('⚠ فشل الحذف'); console.error(e); }
+}
+
+async function seedIfEmpty(){
+  const rolesSnap = await getDocs(col('roles'));
+  if(rolesSnap.empty){
+    for(const key of Object.keys(DEFAULT_ROLES)){
+      await setDoc(doc(db,'roles',key), DEFAULT_ROLES[key]);
+    }
+  }
+  const orgSnap = await getDoc(doc(db,'org','main'));
+  if(!orgSnap.exists()){
+    await setDoc(doc(db,'org','main'), orgCache);
+  }
+  const memSnap = await getDocs(col('members'));
+  if(memSnap.empty){
+    await addDoc(col('members'), {name:"المؤسس", pin:"1234", rank:"owner", points:0, online:false, joined:new Date().toISOString().slice(0,10), last:"—"});
+    await addLog("تم إنشاء الحساب الافتراضي (المؤسس / PIN: 1234)");
+  }
+}
+
+async function maybeInit(){
+  if(appInitialized) return;
+  if(Object.values(firstLoadFlags).every(Boolean)){
+    appInitialized = true;
+    $('#loadingScreen').style.display='none';
+    applyTheme();
+    const savedId = await getSavedSession();
+    const savedMember = savedId ? membersCache.find(m=>m.id===savedId) : null;
+    if(savedMember){
+      await loginAs(savedMember);
+    }else{
+      renderLoginScreen();
+      $('#loginScreen').classList.add('active');
+    }
+  }
+}
+
+function listenAll(){
+  onSnapshot(doc(db,'org','main'), snap=>{
+    if(snap.exists()) orgCache = {...orgCache, ...snap.data()};
+    firstLoadFlags.org = true;
+    applyTheme(); renderBrand(); maybeInit(); if(currentUser) renderAll();
+  }, err=>fsError(err));
+
+  onSnapshot(query(col('roles')), snap=>{
+    rolesCache = {};
+    snap.forEach(d=> rolesCache[d.id] = d.data());
+    firstLoadFlags.roles = true;
+    maybeInit(); if(currentUser){ renderNav(); renderAll(); }
+  }, err=>fsError(err));
+
+  onSnapshot(query(col('members')), snap=>{
+    membersCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    firstLoadFlags.members = true;
+    maybeInit(); if(currentUser) renderAll(); else renderLoginScreen();
+  }, err=>fsError(err));
+
+  onSnapshot(query(col('operations')), snap=>{
+    opsCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    firstLoadFlags.ops = true;
+    maybeInit(); if(currentUser) renderAll();
+  }, err=>fsError(err));
+
+  onSnapshot(query(col('announcements')), snap=>{
+    annCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    firstLoadFlags.ann = true;
+    maybeInit(); if(currentUser) renderAll();
+  }, err=>fsError(err));
+
+  onSnapshot(query(col('calendarEvents')), snap=>{
+    calCache = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    firstLoadFlags.cal = true;
+    maybeInit(); if(currentUser) renderAll();
+  }, err=>fsError(err));
+
+  onSnapshot(query(col('logs')), snap=>{
+    logsCache = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,200);
+    firstLoadFlags.logs = true;
+    maybeInit(); if(currentUser) renderAll();
+  }, err=>fsError(err));
+}
+
+function fsError(err){
+  console.error(err);
+  if(err.code === 'permission-denied'){
+    showFatal(`تم رفض الوصول من Firestore (Permission Denied). يجب ضبط قواعد الأمان (Security Rules) في Firebase Console بحيث تسمح بالقراءة والكتابة للمستخدمين المسجلين (بما فيهم الدخول المجهول). راجع التعليمات المرفقة في المحادثة للحصول على نص القواعد الجاهز.`, err);
+  }
+}
+
+onAuthStateChanged(auth, async (user)=>{
+  if(user){
+    try{ await seedIfEmpty(); }catch(e){ console.error('seed error', e); }
+    listenAll();
+  }
+});
+signInAnonymously(auth).catch(err=>{
+  showFatal("فشل تسجيل الدخول المجهول. تأكد من تفعيل Anonymous Authentication في Firebase Console (Authentication → Sign-in method → Anonymous).", err);
+});
+
+setTimeout(()=>{
+  if($('#loadingScreen').style.display !== 'none'){
+    const flagsStatus = Object.entries(firstLoadFlags).map(([k,v])=>`${k}: ${v?'✅':'❌'}`).join(' | ');
+    showFatal(`انتهت مهلة الاتصال (أكثر من 10 ثوانٍ) ولم يكتمل الاتصال بقاعدة البيانات. الأسباب المحتملة، بالترتيب:<br><br>
+      1) لم يتم نشر (Publish) قواعد Firestore Rules فعليًا.<br>
+      2) Anonymous Authentication غير مفعّل في Firebase Console.<br>
+      3) اسم مشروع Firebase أو الإعدادات (apiKey) غير صحيحة.<br>
+      4) الإنترنت أو حاجب إعلانات على الجهاز يمنع الوصول لملفات gstatic.com/firebaseapp.com.<br><br>
+      حالة التحميل التفصيلية:<br><code style="font-size:10px;">${flagsStatus}</code>`, null);
+  }
+}, 10000);
+
+function applyTheme(){
+  document.documentElement.style.setProperty('--red', orgCache.colorPrimary||'#b3122a');
+  document.documentElement.style.setProperty('--red-deep', orgCache.colorSecondary||'#6e0c1c');
+}
+function renderBrand(){
+  $('#sideOrgName').textContent = orgCache.name;
+  $('#sideOrgSub').textContent = orgCache.subtitle;
+  $('#sideLogo').textContent = orgCache.logo || '🩸';
+  $('#loginOrgName').textContent = orgCache.name;
+  $('#loginOrgSub').textContent = orgCache.subtitle;
+  $('#loginLogo').textContent = orgCache.logo || '🩸';
+  document.title = orgCache.name + ' — نظام إدارة المنظمة';
+}
+
+let pendingMember = null;
+function renderLoginScreen(){
+  const pick = $('#memberPick');
+  pick.innerHTML = membersCache.length ? membersCache.map(m=>`
+    <div class="member-opt" data-id="${m.id}">
+      <span class="avatar">${(m.name||'?').trim()[0]||'?'}</span>
+      <span>${m.name}</span>
+      <span class="rank-badge">${(rolesCache[m.rank]&&rolesCache[m.rank].label)||m.rank}</span>
+    </div>`).join('') : `<div class="empty">لا يوجد أعضاء بعد — سجل أول عضو</div>`;
+  $$('.member-opt').forEach(el=>el.onclick=()=>{
+    pendingMember = membersCache.find(m=>m.id===el.dataset.id);
+    $('#loginStep1').style.display='none';
+    $('#loginStep2').style.display='block';
+    $('#loginError').style.display='none';
+    $('#pinInput').value=''; $('#pinInput').focus();
+  });
+}
+$('#newMemberToggle').onclick = ()=>{
+  $('#loginStep1').style.display='none';
+  $('#loginStep3').style.display='block';
+};
+$('#registerBack').onclick = ()=>{
+  $('#loginStep3').style.display='none';
+  $('#loginStep1').style.display='block';
+};
+$('#pinBack').onclick = ()=>{
+  $('#loginStep2').style.display='none';
+  $('#loginStep1').style.display='block';
+};
+$('#pinSubmit').onclick = ()=>{
+  const pin = $('#pinInput').value.trim();
+  if(pin === String(pendingMember.pin)){
+    loginAs(pendingMember);
+  }else{
+    $('#loginError').textContent = 'رمز PIN غير صحيح';
+    $('#loginError').style.display='block';
+  }
+};
+$('#pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') $('#pinSubmit').click(); });
+$('#registerSubmit').onclick = async ()=>{
+  const name = $('#newMemberName').value.trim();
+  const pin = $('#newMemberPin').value.trim();
+  if(!name || pin.length<4){
+    $('#registerError').textContent = 'أدخل اسمًا صحيحًا ورمز PIN من 4 أرقام على الأقل';
+    $('#registerError').style.display='block';
+    return;
+  }
+  const id = await fsAdd('members', {name, pin, rank:'guest', points:0, online:true, joined:new Date().toISOString().slice(0,10), last:'الآن'});
+  await addLog(`عضو جديد سجّل نفسه: ${name}`);
+  loginAs({id, name, pin, rank:'guest'});
+};
+
+async function loginAs(member){
+  currentUser = {id:member.id, name:member.name, rank:member.rank};
+  await fsSet('members', member.id, {online:true, last:'الآن'});
+  await setSavedSession(member.id);
+  $('#loginScreen').classList.remove('active');
+  $('#appRoot').classList.add('active');
+  renderNav();
+  renderAll();
+}
+$('#logoutBtn').onclick = async ()=>{
+  if(currentUser) await fsSet('members', currentUser.id, {online:false, last:nowStr()});
+  currentUser = null;
+  await clearSavedSession();
+  $('#appRoot').classList.remove('active');
+  $('#loginStep1').style.display='block';
+  $('#loginStep2').style.display='none';
+  $('#loginStep3').style.display='none';
+  renderLoginScreen();
+  $('#loginScreen').classList.add('active');
+};
+
+$('#changePinBtn').onclick = ()=>{
+  if(!currentUser) return;
+  openModal(`
+    <h3>تغيير الرمز السري</h3>
+    <div class="field"><label>الرمز الحالي</label><input id="f-oldpin" type="password" inputmode="numeric" maxlength="6"></div>
+    <div class="field"><label>الرمز الجديد (4 أرقام على الأقل)</label><input id="f-newpin" type="password" inputmode="numeric" maxlength="6"></div>
+    <div id="changePinError" style="color:var(--red-bright); font-size:12px; margin-bottom:8px; display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="savePinBtn">حفظ الرمز الجديد</button>
+      <button class="btn btn-ghost" id="cancelModalBtn">إلغاء</button>
+    </div>
+  `);
+  $('#cancelModalBtn').onclick = closeModal;
+  $('#savePinBtn').onclick = async ()=>{
+    const me = membersCache.find(m=>m.id===currentUser.id);
+    const oldPin = $('#f-oldpin').value.trim();
+    const newPin = $('#f-newpin').value.trim();
+    const err = $('#changePinError');
+    if(!me || oldPin !== String(me.pin)){
+      err.textContent = 'الرمز الحالي غير صحيح'; err.style.display='block'; return;
+    }
+    if(newPin.length < 4){
+      err.textContent = 'الرمز الجديد يجب أن يكون 4 أرقام على الأقل'; err.style.display='block'; return;
+    }
+    await fsSet('members', currentUser.id, {pin:newPin});
+    await addLog(`قام ${currentUser.name} بتغيير رمز PIN الخاص به`);
+    toast('تم تغيير الرمز بنجاح');
+    closeModal();
+  };
+};
+
+const NAV_ITEMS = [
+  {view:'dashboard', label:'لوحة التحكم', icon:'dashboard', perm:null},
+  {view:'operations', label:'العمليات', icon:'ops', perm:null},
+  {view:'members', label:'الأعضاء', icon:'members', perm:null},
+  {view:'leaderboard', label:'لوحة الصدارة', icon:'leader', perm:null},
+  {view:'calendar', label:'التقويم', icon:'calendar', perm:null},
+  {view:'announcements', label:'الإعلانات', icon:'ann', perm:null},
+  {view:'logs', label:'سجل النشاط', icon:'logs', perm:'logs'},
+  {view:'settings', label:'الإعدادات', icon:'settings', perm:'settings'}
+];
+function renderNav(){
+  $('#whoAvatar').textContent = (currentUser.name||'?').trim()[0]||'?';
+  $('#whoName').textContent = currentUser.name;
+  $('#whoRank').textContent = (rolesCache[currentUser.rank]&&rolesCache[currentUser.rank].label) || currentUser.rank;
+  const items = NAV_ITEMS.filter(n=> !n.perm || can(n.perm) );
+  $('#navList').innerHTML = items.map((n,i)=>`<div class="nav-item ${i===0?'active':''}" data-view="${n.view}">${ICONS[n.icon]}<span>${n.label}</span></div>`).join('');
+  $$('.nav-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      $$('.nav-item').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      $$('.view').forEach(v=>v.classList.remove('active'));
+      $('#view-'+item.dataset.view).classList.add('active');
+      const nv = NAV_ITEMS.find(n=>n.view===item.dataset.view);
+      $('#viewTitle').innerHTML = ICONS[nv.icon] + ' ' + nv.label;
+      $('#sidebar').classList.remove('open');
+    });
+  });
+  if(items.length){
+    $$('.view').forEach(v=> v.id==='view-'+items[0].view ? v.classList.add('active') : v.classList.remove('active'));
+    $('#viewTitle').innerHTML = ICONS[items[0].icon] + ' ' + items[0].label;
+  }
+}
+$('#menuToggle').onclick = ()=> $('#sidebar').classList.toggle('open');
+
+function statusMeta(s){
+  return {ready:{label:'جاهزة', cls:'ready'}, progress:{label:'جارية', cls:'progress'}, completed:{label:'مكتملة', cls:'completed'}, cancelled:{label:'ملغاة', cls:'cancelled'}}[s] || {label:s, cls:'ready'};
+}
+function emptyHTML(msg){ return `<div class="empty">◇<br>${msg}</div>`; }
+
+function renderAll(){
+  renderDashboard(); renderOperations(); renderMembers(); renderLeaderboard();
+  renderCalendar(); renderAnnouncements(); renderLogs(); renderSettings();
+}
+
+function renderDashboard(){
+  const ops = opsCache;
+  const total = ops.length;
+  const ready = ops.filter(o=>o.status==='ready').length;
+  const progress = ops.filter(o=>o.status==='progress').length;
+  const completed = ops.filter(o=>o.status==='completed').length;
+  const profit = ops.filter(o=>o.status==='completed').reduce((a,o)=>a+(Number(o.profit)||0),0);
+  const success = total ? Math.round((completed/total)*100) : 0;
+  const online = membersCache.filter(m=>m.online).length;
+  const totalPoints = membersCache.reduce((a,m)=>a+(Number(m.points)||0),0);
+
+  $('#statGrid').innerHTML = [
+    ['إجمالي العمليات', total], ['عمليات جاهزة', ready], ['عمليات جارية', progress], ['عمليات مكتملة', completed],
+    ['الأعضاء المتصلين', online+' / '+membersCache.length], ['الأرباح المتوقعة', '$'+profit.toLocaleString()],
+    ['نسبة النجاح', success+'%'], ['إجمالي النقاط', totalPoints]
+  ].map(([label,num],i)=>`<div class="stat-card" style="animation-delay:${i*30}ms"><div class="stat-num">${num}</div><div class="stat-label">${label}</div></div>`).join('');
+
+  const recent = [...ops].slice(-3).reverse();
+  $('#recentOps').innerHTML = recent.length ? recent.map(opCardHTML).join('') : emptyHTML('لا توجد عمليات بعد');
+  bindCaseEvents('#recentOps');
+
+  const upcoming = [...calCache].sort((a,b)=> (a.date||'').localeCompare(b.date||'')).slice(0,3);
+  $('#dashCal').innerHTML = upcoming.length ? upcoming.map(calRowHTML).join('') : emptyHTML('لا توجد أحداث قادمة');
+
+  const annRecent = [...annCache].slice(0,2);
+  $('#recentAnn').innerHTML = annRecent.length ? annRecent.map(annCardHTML).join('') : emptyHTML('لا توجد إعلانات');
+}
+
+function opCardHTML(o){
+  const sm = statusMeta(o.status);
+  const reqs = Array.isArray(o.requirements) ? o.requirements : (REQ_TEMPLATES[o.category]||[]).map(name=>({name, have:false}));
+  const editable = can('ops');
+  return `<div class="case" data-id="${o.id}">
+    <div class="stamp ${sm.cls}">${sm.label}</div>
+    <div class="case-cat">${o.category||'—'}</div>
+    <div class="case-name">${o.name}</div>
+    <div class="case-meta">
+      <div>📅 <b>${o.date||'—'}</b> — ${o.time||'—'}</div>
+      <div>📍 ${o.location||'—'}</div>
+      <div>👤 القائد: <b>${o.leader||'—'}</b></div>
+    </div>
+    <div class="case-req">${reqs.map((r,idx)=>`<span class="chip ${r.have?'have':''} ${editable?'toggle-req':''}" data-opid="${o.id}" data-idx="${idx}">${r.have?'✓ ':''}${r.name}</span>`).join('')}</div>
+    <div class="case-foot">
+      <span class="case-points">$${Number(o.profit||0).toLocaleString()}</span>
+      ${editable?`<span style="display:flex; gap:6px;">
+        <button class="btn btn-sm btn-ghost edit-op" data-id="${o.id}">تعديل</button>
+        <button class="btn btn-sm btn-danger del-op" data-id="${o.id}">حذف</button>
+      </span>`:''}
+    </div>
+  </div>`;
+}
+function renderOperations(){
+  $('#opsGrid').innerHTML = opsCache.length ? opsCache.slice().reverse().map(opCardHTML).join('') : emptyHTML('لا توجد عمليات — أضف عملية جديدة');
+  $('#addOpBtn').style.display = can('ops') ? 'inline-flex' : 'none';
+  bindCaseEvents('#opsGrid');
+}
+function bindCaseEvents(scope){
+  $$(`${scope} .edit-op`).forEach(b=>b.onclick=(e)=>{e.stopPropagation(); openOpModal(b.dataset.id);});
+  $$(`${scope} .del-op`).forEach(b=>b.onclick=async (e)=>{
+    e.stopPropagation();
+    if(confirm('حذف هذه العملية نهائيًا؟')){
+      const op = opsCache.find(x=>x.id===b.dataset.id);
+      await fsDelete('operations', b.dataset.id);
+      await addLog(`تم حذف العملية: ${op?op.name:''}`);
+    }
+  });
+  $$(`${scope} .toggle-req`).forEach(c=>c.onclick=async ()=>{
+    const op = opsCache.find(x=>x.id===c.dataset.opid);
+    if(!op) return;
+    const reqs = Array.isArray(op.requirements) ? [...op.requirements] : (REQ_TEMPLATES[op.category]||[]).map(name=>({name, have:false}));
+    reqs[c.dataset.idx] = {...reqs[c.dataset.idx], have: !reqs[c.dataset.idx].have};
+    await fsSet('operations', op.id, {requirements:reqs});
+  });
+}
+function openOpModal(id){
+  const op = id ? opsCache.find(o=>o.id===id) : null;
+  const categories = Object.keys(REQ_TEMPLATES);
+  const cat = op ? op.category : categories[0];
+  const reqs = op ? (Array.isArray(op.requirements)?op.requirements:(REQ_TEMPLATES[cat]||[]).map(name=>({name,have:false}))) : (REQ_TEMPLATES[cat]||[]).map(name=>({name,have:false}));
+  openModal(`
+    <h3>${id?'تعديل العملية':'عملية جديدة'}</h3>
+    <div class="field"><label>اسم العملية</label><input id="f-name" value="${op?op.name:''}"></div>
+    <div class="row2">
+      <div class="field"><label>الفئة</label>
+        <select id="f-cat">${categories.map(c=>`<option ${cat===c?'selected':''}>${c}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>الحالة</label>
+        <select id="f-status">
+          <option value="ready" ${op&&op.status==='ready'?'selected':''}>جاهزة</option>
+          <option value="progress" ${op&&op.status==='progress'?'selected':''}>جارية</option>
+          <option value="completed" ${op&&op.status==='completed'?'selected':''}>مكتملة</option>
+          <option value="cancelled" ${op&&op.status==='cancelled'?'selected':''}>ملغاة</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>التاريخ</label><input id="f-date" type="date" value="${op&&op.date?op.date:''}"></div>
+      <div class="field"><label>الوقت</label><input id="f-time" type="time" value="${op&&op.time?op.time:''}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>الموقع</label><input id="f-loc" value="${op&&op.location?op.location:''}"></div>
+      <div class="field"><label>القائد</label><input id="f-leader" value="${op&&op.leader?op.leader:''}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>الأرباح المتوقعة ($)</label><input id="f-profit" type="number" value="${op&&op.profit?op.profit:''}"></div>
+      <div class="field"><label>النقاط 🏆</label><input id="f-points" type="number" value="${op&&op.points!=null?op.points:(POINTS_BY_CATEGORY[cat]||0)}"></div>
+    </div>
+    <div class="field"><label>ملاحظات</label><textarea id="f-notes">${op&&op.notes?op.notes:(CATEGORY_NOTE_HINTS[cat]||'')}</textarea></div>
+    <div class="field"><label>المتطلبات</label><div id="reqRows">${reqs.map((r,i)=>reqRowHTML(r,i)).join('')}</div>
+      <button class="btn btn-sm btn-ghost" id="addReqRow" type="button">+ إضافة متطلب</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="saveOpBtn">${id?'حفظ التعديلات':'إنشاء العملية'}</button>
+      <button class="btn btn-ghost" id="cancelModalBtn">إلغاء</button>
+    </div>
+  `);
+  $('#f-cat').onchange = ()=>{
+    const newCat = $('#f-cat').value;
+    const newReqs = (REQ_TEMPLATES[newCat]||[]).map(name=>({name,have:false}));
+    $('#reqRows').innerHTML = newReqs.map((r,i)=>reqRowHTML(r,i)).join('');
+    bindReqRowRemovals();
+    $('#f-points').value = POINTS_BY_CATEGORY[newCat] || 0;
+    if(!$('#f-notes').value.trim()) $('#f-notes').value = CATEGORY_NOTE_HINTS[newCat] || '';
+  };
+  $('#addReqRow').onclick = ()=>{
+    const wrap = $('#reqRows');
+    const i = wrap.children.length;
+    wrap.insertAdjacentHTML('beforeend', reqRowHTML({name:'',have:false}, i));
+    bindReqRowRemovals();
+  };
+  bindReqRowRemovals();
+  $('#cancelModalBtn').onclick = closeModal;
+  $('#saveOpBtn').onclick = async ()=>{
+    const name = $('#f-name').value.trim();
+    if(!name){ alert('اكتب اسم العملية'); return; }
+    const reqNames = [...$$('#reqRows .req-row')].map(row=>({
+      name: row.querySelector('.req-name').value.trim(),
+      have: row.querySelector('.req-have').checked
+    })).filter(r=>r.name);
+    const data = {
+      name, category:$('#f-cat').value, status:$('#f-status').value,
+      date:$('#f-date').value, time:$('#f-time').value, location:$('#f-loc').value,
+      leader:$('#f-leader').value, profit:Number($('#f-profit').value)||0, points:Number($('#f-points').value)||0, notes:$('#f-notes').value,
+      requirements: reqNames
+    };
+    const alreadyAwarded = !!(op && op.pointsAwarded);
+    if(data.status==='completed' && !alreadyAwarded && data.points>0 && data.leader){
+      const leaderMember = membersCache.find(m=>m.name.trim()===data.leader.trim());
+      if(leaderMember){
+        await fsSet('members', leaderMember.id, {points:(Number(leaderMember.points)||0)+data.points});
+        await addLog(`تم منح ${data.points} نقطة لـ ${leaderMember.name} عن عملية: ${name}`);
+      }
+      data.pointsAwarded = true;
+    }
+    if(id){ await fsSet('operations', id, data); await addLog(`تم تعديل العملية: ${name}`); }
+    else{ await fsAdd('operations', data); await addLog(`تم إنشاء عملية جديدة: ${name}`); }
+    closeModal();
+  };
+}
+$('#addOpBtn').onclick = ()=> openOpModal(null);
+function reqRowHTML(r,i){
+  return `<div class="req-row">
+    <input class="req-name" value="${r.name||''}" placeholder="اسم المتطلب">
+    <label style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); white-space:nowrap;">
+      <input type="checkbox" class="req-have" ${r.have?'checked':''}> متوفر
+    </label>
+    <button type="button" class="btn btn-sm btn-danger remove-req">✕</button>
+  </div>`;
+}
+function bindReqRowRemovals(){
+  $$('.remove-req').forEach(b=>b.onclick=()=>b.closest('.req-row').remove());
+}
+
+function rankLabel(rank){ return (rolesCache[rank] && rolesCache[rank].label) || rank; }
+function renderMembers(){
+  const editable = can('members');
+  const rows = membersCache.map(m=>`
+    <tr>
+      <td><span class="avatar">${(m.name||'?').trim()[0]||'?'}</span>${m.name}</td>
+      <td><span class="rank-badge">${rankLabel(m.rank)}</span></td>
+      <td class="mono">${m.points||0}</td>
+      <td><span class="status-dot ${m.online?'on':'off'}"></span>${m.online?'متصل':'غير متصل'}</td>
+      <td style="color:var(--muted); font-size:12px;">${m.last||'—'}</td>
+      <td style="white-space:nowrap;">
+        ${editable?`<button class="btn btn-sm btn-ghost edit-mem" data-id="${m.id}">تعديل</button>
+        <button class="btn btn-sm btn-danger del-mem" data-id="${m.id}">حذف</button>`:''}
+      </td>
+    </tr>`).join('');
+  $('#membersBody').innerHTML = rows || `<tr><td colspan="6">${emptyHTML('لا يوجد أعضاء بعد')}</td></tr>`;
+  $('#addMemberBtn').style.display = editable ? 'inline-flex' : 'none';
+  $$('.edit-mem').forEach(b=>b.onclick=()=>openMemberModal(b.dataset.id));
+  $$('.del-mem').forEach(b=>b.onclick=async ()=>{
+    if(confirm('حذف هذا العضو؟')){
+      const m = membersCache.find(x=>x.id===b.dataset.id);
+      await fsDelete('members', b.dataset.id);
+      await addLog(`تم حذف العضو: ${m?m.name:''}`);
+    }
+  });
+}
+function openMemberModal(id){
+  const m = id ? membersCache.find(x=>x.id===id) : null;
+  const canPoints = can('points');
+  openModal(`
+    <h3>${id?'تعديل العضو':'عضو جديد'}</h3>
+    <div class="field"><label>الاسم</label><input id="f-mname" value="${m?m.name:''}"></div>
+    <div class="row2">
+      <div class="field"><label>الرتبة</label>
+        <select id="f-mrank">${Object.keys(rolesCache).sort((a,b)=>(rolesCache[a].order||0)-(rolesCache[b].order||0)).map(r=>`<option value="${r}" ${m&&m.rank===r?'selected':''}>${rolesCache[r].label}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>النقاط</label><input id="f-mpoints" type="number" value="${m?m.points||0:0}" ${canPoints?'':'disabled'}></div>
+    </div>
+    <div class="field"><label>رمز PIN ${id?'(اتركه فارغًا لعدم التغيير)':''}</label><input id="f-mpin" type="password" maxlength="6" placeholder="****"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="saveMemBtn">${id?'حفظ التعديلات':'إضافة العضو'}</button>
+      <button class="btn btn-ghost" id="cancelModalBtn">إلغاء</button>
+    </div>
+  `);
+  $('#cancelModalBtn').onclick = closeModal;
+  $('#saveMemBtn').onclick = async ()=>{
+    const name = $('#f-mname').value.trim();
+    if(!name){ alert('اكتب اسم العضو'); return; }
+    const data = {name, rank:$('#f-mrank').value};
+    if(canPoints) data.points = Number($('#f-mpoints').value)||0;
+    const pin = $('#f-mpin').value.trim();
+    if(pin) data.pin = pin;
+    if(id){ await fsSet('members', id, data); await addLog(`تم تعديل بيانات العضو: ${name}`); }
+    else{
+      if(!pin){ alert('حدد رمز PIN للعضو الجديد'); return; }
+      data.pin = pin; data.points = data.points||0; data.online=false; data.joined = new Date().toISOString().slice(0,10); data.last='—';
+      await fsAdd('members', data);
+      await addLog(`تم إضافة عضو جديد: ${name}`);
+    }
+    closeModal();
+  };
+}
+
+$('#addMemberBtn').onclick = ()=> openMemberModal(null);
+function renderLeaderboard(){
+  const sorted = [...membersCache].sort((a,b)=>(b.points||0)-(a.points||0));
+  $('#leaderList').innerHTML = sorted.length ? sorted.map((m,i)=>`
+    <div class="leader-row" style="animation-delay:${i*30}ms">
+      <div class="leader-rank">${i+1}</div>
+      <span class="avatar">${(m.name||'?').trim()[0]||'?'}</span>
+      <div class="leader-name">${m.name} <span class="rank-badge" style="margin-right:6px;">${rankLabel(m.rank)}</span></div>
+      <div class="leader-points">${m.points||0} نقطة</div>
+    </div>`).join('') : emptyHTML('لا يوجد أعضاء بعد');
+}
+
+function calRowHTML(c){
+  return `<div class="cal-row">
+    <span class="cal-date mono">${c.date||'—'} ${c.time||''}</span>
+    <div style="flex:1;">${c.title}</div>
+    ${can('cal')?`<button class="btn btn-sm btn-danger del-cal" data-id="${c.id}">حذف</button>`:''}
+  </div>`;
+}
+function renderCalendar(){
+  const sorted = [...calCache].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  $('#calList').innerHTML = sorted.length ? sorted.map(calRowHTML).join('') : emptyHTML('لا توجد أحداث بعد');
+  $('#addCalBtn').style.display = can('cal') ? 'inline-flex' : 'none';
+  $$('.del-cal').forEach(b=>b.onclick=async ()=>{
+    if(confirm('حذف هذا الحدث؟')) await fsDelete('calendarEvents', b.dataset.id);
+  });
+}
+$('#addCalBtn').onclick = ()=>{
+  openModal(`
+    <h3>حدث جديد</h3>
+    <div class="field"><label>العنوان</label><input id="f-ctitle"></div>
+    <div class="row2">
+      <div class="field"><label>التاريخ</label><input id="f-cdate" type="date"></div>
+      <div class="field"><label>الوقت</label><input id="f-ctime" type="time"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="saveCalBtn">إضافة</button>
+      <button class="btn btn-ghost" id="cancelModalBtn">إلغاء</button>
+    </div>
+  `);
+  $('#cancelModalBtn').onclick = closeModal;
+  $('#saveCalBtn').onclick = async ()=>{
+    const title = $('#f-ctitle').value.trim();
+    if(!title){ alert('اكتب عنوان الحدث'); return; }
+    await fsAdd('calendarEvents', {title, date:$('#f-cdate').value, time:$('#f-ctime').value});
+    await addLog(`تم إضافة حدث للتقويم: ${title}`);
+    closeModal();
+  };
+};
+
+function annCardHTML(a){
+  return `<div class="ann"><div class="ann-head"><div class="ann-title">${a.pinned?'<span class="pin">📌</span> ':''}${a.title}</div><div class="ann-date mono">${a.date}</div></div><div class="ann-body">${a.body}</div></div>`;
+}
+function renderAnnouncements(){
+  const list = [...annCache].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+  const editable = can('ann');
+  $('#annList').innerHTML = list.length ? list.map(a=>`
+    <div class="ann">
+      <div class="ann-head">
+        <div class="ann-title">${a.pinned?'<span class="pin">📌</span> ':''}${a.title}</div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="ann-date mono">${a.date}</div>
+          ${editable?`<button class="btn btn-sm btn-ghost pin-ann" data-id="${a.id}">${a.pinned?'إلغاء التثبيت':'تثبيت'}</button>
+          <button class="btn btn-sm btn-danger del-ann" data-id="${a.id}">حذف</button>`:''}
+        </div>
+      </div>
+      <div class="ann-body">${a.body}</div>
+    </div>`).join('') : emptyHTML('لا توجد إعلانات بعد');
+  $('#addAnnBtn').style.display = editable ? 'inline-flex' : 'none';
+  $$('.pin-ann').forEach(b=>b.onclick=async ()=>{
+    const a = annCache.find(x=>x.id===b.dataset.id);
+    await fsSet('announcements', a.id, {pinned: !a.pinned});
+  });
+  $$('.del-ann').forEach(b=>b.onclick=async ()=>{
+    if(confirm('حذف هذا الإعلان؟')) await fsDelete('announcements', b.dataset.id);
+  });
+}
+$('#addAnnBtn').onclick = ()=>{
+  openModal(`
+    <h3>إعلان جديد</h3>
+    <div class="field"><label>العنوان</label><input id="f-atitle"></div>
+    <div class="field"><label>النص</label><textarea id="f-abody"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="saveAnnBtn">نشر الإعلان</button>
+      <button class="btn btn-ghost" id="cancelModalBtn">إلغاء</button>
+    </div>
+  `);
+  $('#cancelModalBtn').onclick = closeModal;
+  $('#saveAnnBtn').onclick = async ()=>{
+    const title = $('#f-atitle').value.trim();
+    const body = $('#f-abody').value.trim();
+    if(!title||!body){ alert('املأ العنوان والنص'); return; }
+    await fsAdd('announcements', {title, body, date:nowStr(), pinned:false});
+    await addLog(`تم نشر إعلان: ${title}`);
+    closeModal();
+  };
+};
+
+function renderLogs(){
+  $('#logsList').innerHTML = logsCache.length ? logsCache.map(l=>`
+    <div style="display:flex; justify-content:space-between; padding:10px 14px; background:var(--panel); border:1px solid var(--line-soft); border-radius:4px; margin-bottom:6px; font-size:13px;">
+      <span>${l.text}</span><span class="mono" style="color:var(--muted-2); font-size:11px;">${l.date}</span>
+    </div>`).join('') : emptyHTML('لا يوجد نشاط بعد');
+}
+
+function renderSettings(){
+  const allowed = can('settings');
+  if(!allowed){
+    $('#view-settings').innerHTML = emptyHTML('لا تملك صلاحية الوصول إلى الإعدادات');
+    return;
+  }
+  $('#setOrgName') && ($('#setOrgName').value = orgCache.name);
+  if($('#setOrgSub')) $('#setOrgSub').value = orgCache.subtitle;
+  if($('#setOrgLogo')) $('#setOrgLogo').value = orgCache.logo;
+  if($('#setColorPrimary')) $('#setColorPrimary').value = orgCache.colorPrimary || '#b3122a';
+  if($('#setColorSecondary')) $('#setColorSecondary').value = orgCache.colorSecondary || '#6e0c1c';
+  renderPermTable();
+}
+$$('.stab').forEach(tab=>tab.onclick=()=>{
+  $$('.stab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  $$('.settings-pane').forEach(p=>p.classList.remove('active'));
+  const pane = $('#pane-'+tab.dataset.pane);
+  if(pane) pane.classList.add('active');
+});
+function renderPermTable(){
+  const table = $('#permTable');
+  if(!table) return;
+  const roleKeys = Object.keys(rolesCache).sort((a,b)=>(rolesCache[a].order||0)-(rolesCache[b].order||0));
+  const permKeys = Object.keys(PERM_LABELS);
+  let html = `<tr><th>الرتبة</th>${permKeys.map(p=>`<th>${PERM_LABELS[p]}</th>`).join('')}</tr>`;
+  roleKeys.forEach(rk=>{
+    html += `<tr><td>${rolesCache[rk].label}</td>${permKeys.map(p=>`<td><input type="checkbox" class="perm-cb" data-role="${rk}" data-perm="${p}" ${rolesCache[rk].perms&&rolesCache[rk].perms[p]?'checked':''} ${can('roles')?'':'disabled'}></td>`).join('')}</tr>`;
+  });
+  table.innerHTML = html;
+}
+$('#saveGeneralBtn').onclick = async ()=>{
+  await fsSet('org','main',{name:$('#setOrgName').value.trim()||'RED LINE', subtitle:$('#setOrgSub').value.trim()||'ORGANIZATION OS', logo:$('#setOrgLogo').value.trim()||'🩸'});
+  await addLog('تم تحديث الإعدادات العامة للمنظمة');
+  toast('تم الحفظ');
+};
+$('#saveThemeBtn').onclick = async ()=>{
+  await fsSet('org','main',{colorPrimary:$('#setColorPrimary').value, colorSecondary:$('#setColorSecondary').value});
+  await addLog('تم تحديث ألوان المظهر');
+  toast('تم حفظ المظهر');
+};
+$('#savePermsBtn').onclick = async ()=>{
+  if(!can('roles')){ toast('لا تملك صلاحية تعديل الأدوار'); return; }
+  const updates = {};
+  $$('.perm-cb').forEach(cb=>{
+    const role = cb.dataset.role, perm = cb.dataset.perm;
+    updates[role] = updates[role] || {...rolesCache[role].perms};
+    updates[role][perm] = cb.checked;
+  });
+  for(const role of Object.keys(updates)){
+    await fsSet('roles', role, {perms: updates[role]});
+  }
+  await addLog('تم تحديث صلاحيات الأدوار');
+  toast('تم حفظ الصلاحيات');
+};
+$('#resetDataBtn').onclick = async ()=>{
+  if(!confirm('هل أنت متأكد؟ سيتم حذف جميع العمليات والإعلانات والأحداث نهائيًا.')) return;
+  for(const o of opsCache) await deleteDoc(doc(db,'operations',o.id));
+  for(const a of annCache) await deleteDoc(doc(db,'announcements',a.id));
+  for(const c of calCache) await deleteDoc(doc(db,'calendarEvents',c.id));
+  await addLog('تمت إعادة تعيين بيانات المنظمة');
+  toast('تمت إعادة التعيين');
+};
+
+function openModal(html){ $('#modalBox').innerHTML = html; $('#overlay').classList.add('active'); }
+function closeModal(){ $('#overlay').classList.remove('active'); }
+$('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeModal(); });
+
+$('#globalSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  const items = q ? opsCache.filter(o => ((o.name||'')+(o.category||'')+(o.location||'')+(o.leader||'')).toLowerCase().includes(q)) : opsCache;
+  const grid = $('#opsGrid');
+  if(!grid) return;
+  grid.innerHTML = items.length ? items.slice().reverse().map(opCardHTML).join('') : emptyHTML('لا توجد نتائج');
+  bindCaseEvents('#opsGrid');
+  $$('.nav-item').forEach(i=>i.classList.remove('active'));
+  const opNav = [...$$('.nav-item')].find(i=>i.dataset.view==='operations');
+  if(opNav) opNav.classList.add('active');
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  $('#view-operations').classList.add('active');
+  $('#viewTitle').innerHTML = ICONS.ops + ' العمليات';
+});
+</script>
+</body>
+</html>
