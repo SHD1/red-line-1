@@ -17,11 +17,14 @@
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+@keyframes bgDrift{0%,100%{background-position:15% -10%, 100% 0%;} 50%{background-position:25% 0%, 85% 10%;}}
 body{
   background:
     radial-gradient(ellipse 900px 500px at 15% -10%, rgba(179,18,42,.16), transparent 60%),
     radial-gradient(ellipse 700px 500px at 100% 0%, rgba(179,18,42,.08), transparent 55%),
     var(--bg);
+  background-size:140% 140%, 140% 140%;
+  animation:bgDrift 16s ease-in-out infinite;
   color:var(--ink); font-family:'Tajawal',sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased;
 }
 .display{font-family:'Oswald','Tajawal',sans-serif; text-transform:uppercase; letter-spacing:.04em;}
@@ -38,7 +41,7 @@ svg{display:inline-block; vertical-align:middle;}
 #loginScreen{position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; background:
   radial-gradient(ellipse 800px 600px at 50% 0%, rgba(179,18,42,.18), transparent 60%), var(--bg);}
 #loginScreen.active{display:flex;}
-.login-card{width:380px; max-width:92vw; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:30px 26px; box-shadow:0 30px 80px rgba(0,0,0,.5); animation:fadeIn .4s ease;}
+.login-card{width:380px; max-width:92vw; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:30px 26px; box-shadow:0 30px 80px rgba(0,0,0,.5), 0 0 40px rgba(179,18,42,.15); animation:fadeIn .4s ease, glowPulse 3.4s ease-in-out infinite;}
 .login-brand{text-align:center; margin-bottom:22px;}
 .login-brand .logo-emoji{font-size:38px; margin-bottom:6px;}
 .login-brand h1{font-family:'Oswald'; font-size:24px; letter-spacing:.06em; margin:0;}
@@ -53,7 +56,8 @@ svg{display:inline-block; vertical-align:middle;}
 @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
 .sidebar{width:235px; flex-shrink:0; background:linear-gradient(180deg, var(--bg-2), var(--bg)); border-left:1px solid var(--line); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; z-index:20;}
 .brand{padding:20px 18px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px;}
-.brand-bar{width:5px; height:32px; background:var(--red); box-shadow:0 0 12px var(--red); border-radius:2px;}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 8px var(--red);} 50%{box-shadow:0 0 22px var(--red-bright), 0 0 6px var(--red-bright);}}
+.brand-bar{width:5px; height:32px; background:var(--red); box-shadow:0 0 12px var(--red); border-radius:2px; animation:glowPulse 2.6s ease-in-out infinite;}
 .brand-name{font-family:'Oswald'; font-size:20px; letter-spacing:.05em; color:var(--ink); line-height:1.15;}
 .brand-name b{color:var(--red-bright);}
 .brand-sub{font-size:10px; color:var(--muted-2); letter-spacing:.15em; margin-top:4px; font-family:'JetBrains Mono';}
@@ -88,8 +92,10 @@ svg{display:inline-block; vertical-align:middle;}
 
 .btn{background:var(--panel-2); border:1px solid var(--line); color:var(--ink); padding:9px 16px; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; font-family:'Tajawal'; transition:.15s; display:inline-flex; align-items:center; gap:6px;}
 .btn:hover{border-color:var(--muted-2); transform:translateY(-1px);}
-.btn-primary{background:linear-gradient(180deg, var(--red), var(--red-deep)); border-color:var(--red-deep); box-shadow:0 2px 10px rgba(179,18,42,.35);}
-.btn-primary:hover{background:linear-gradient(180deg, var(--red-bright), var(--red));}
+.btn-primary{background:linear-gradient(180deg, var(--red), var(--red-deep)); border-color:var(--red-deep); box-shadow:0 2px 10px rgba(179,18,42,.35); position:relative; overflow:hidden;}
+.btn-primary::after{content:''; position:absolute; top:0; right:-60%; width:40%; height:100%; background:linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent); transform:skewX(-20deg); transition:right .5s ease;}
+.btn-primary:hover::after{right:120%;}
+.btn-primary:hover{background:linear-gradient(180deg, var(--red-bright), var(--red)); box-shadow:0 4px 22px rgba(228,45,70,.55); transform:translateY(-2px) scale(1.02);}
 .btn-ghost{background:transparent; border-color:var(--line);}
 .btn-danger{color:#ff8686; border-color:#4a1a1a;}
 .btn-sm{padding:6px 10px; font-size:12px;}
@@ -97,7 +103,8 @@ svg{display:inline-block; vertical-align:middle;}
 .btn svg{width:14px; height:14px;}
 
 .stat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:12px; margin-bottom:22px;}
-.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 18px; position:relative; overflow:hidden; animation:fadeIn .3s ease backwards;}
+.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 18px; position:relative; overflow:hidden; animation:fadeIn .3s ease backwards; transition:.25s;}
+.stat-card:hover{border-color:var(--red-deep); transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.4), 0 0 18px rgba(179,18,42,.2);}
 .stat-card::before{content:''; position:absolute; right:0; top:0; bottom:0; width:3px; background:var(--red);}
 .stat-num{font-family:'JetBrains Mono'; font-size:27px; font-weight:700; color:var(--ink); line-height:1;}
 .stat-label{font-size:11px; color:var(--muted); margin-top:6px;}
@@ -106,7 +113,7 @@ svg{display:inline-block; vertical-align:middle;}
 
 .case-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:16px;}
 .case{background:repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(255,255,255,.012) 28px), var(--panel); border:1px solid var(--line); border-radius:6px; padding:16px 16px 14px; position:relative; transition:.15s; animation:fadeIn .35s ease backwards;}
-.case:hover{border-color:var(--red-deep); transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.4);}
+.case:hover{border-color:var(--red-deep); transform:translateY(-5px) scale(1.01); box-shadow:0 14px 34px rgba(0,0,0,.45), 0 0 24px rgba(179,18,42,.25); cursor:pointer;}
 .case-cat{font-size:10px; color:var(--muted-2); font-family:'JetBrains Mono'; letter-spacing:.1em;}
 .case-name{font-family:'Oswald'; font-size:18px; margin:4px 0 8px; color:var(--ink);}
 .case-meta{font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:4px; margin-bottom:10px;}
@@ -114,14 +121,20 @@ svg{display:inline-block; vertical-align:middle;}
 .case-req{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;}
 .chip{font-size:10px; background:var(--panel-2); border:1px solid var(--line-soft); padding:3px 8px; border-radius:20px; color:var(--muted); font-family:'JetBrains Mono'; cursor:pointer; user-select:none;}
 .chip.have{color:var(--green); border-color:var(--green);}
-.stamp{position:absolute; top:14px; left:14px; font-family:'Oswald'; font-size:11px; font-weight:700; letter-spacing:.1em; padding:4px 10px; border:2px solid; border-radius:3px; transform:rotate(-8deg); opacity:.92;}
+.stamp{position:absolute; top:14px; left:14px; font-family:'Oswald'; font-size:11px; font-weight:700; letter-spacing:.1em; padding:4px 10px; border:2px solid; border-radius:3px; transform:rotate(-8deg); opacity:.92; animation:stampPop .4s cubic-bezier(.34,1.56,.64,1) backwards;}
+@keyframes stampPop{0%{transform:rotate(-8deg) scale(0); opacity:0;} 70%{transform:rotate(-10deg) scale(1.15); opacity:1;} 100%{transform:rotate(-8deg) scale(1); opacity:.92;}}
 .stamp.ready{color:var(--amber); border-color:var(--amber);}
 .stamp.progress{color:var(--red-bright); border-color:var(--red-bright);}
 .stamp.completed{color:var(--green); border-color:var(--green);}
 .stamp.cancelled{color:var(--grey-status); border-color:var(--grey-status); text-decoration:line-through;}
-.points-badge{position:absolute; top:14px; right:14px; font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:var(--gold); background:rgba(201,162,39,.1); border:1px solid var(--gold); border-radius:20px; padding:3px 10px; display:flex; align-items:center; gap:4px;}
+.points-badge{position:absolute; top:14px; right:14px; font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:var(--gold); background:rgba(201,162,39,.1); border:1px solid var(--gold); border-radius:20px; padding:3px 10px; display:flex; align-items:center; gap:4px; animation:goldPulse 3s ease-in-out infinite;}
+@keyframes goldPulse{0%,100%{box-shadow:0 0 0 rgba(201,162,39,0);} 50%{box-shadow:0 0 10px rgba(201,162,39,.5);}}
 .case-participants{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
 .participant-chip{font-size:10px; background:var(--panel-2); border:1px solid var(--line-soft); padding:3px 8px; border-radius:20px; color:var(--ink);}
+.guide-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:12px; max-height:60vh; overflow-y:auto;}
+.guide-card{background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:12px 14px;}
+.guide-card h4{font-family:'Oswald'; font-size:14px; margin:0 0 6px; display:flex; justify-content:space-between; align-items:center;}
+.guide-card .gpts{color:var(--gold); font-family:'JetBrains Mono'; font-size:11px;}
 .case-foot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line-soft);}
 .case-points{font-family:'JetBrains Mono'; font-size:12px; color:var(--gold);}
 
@@ -292,7 +305,10 @@ svg{display:inline-block; vertical-align:middle;}
       <section class="view" id="view-operations">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
           <div style="color:var(--muted); font-size:13px;">إدارة جميع عمليات المنظمة ومتطلباتها</div>
-          <button class="btn btn-primary" id="addOpBtn">+ عملية جديدة</button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-ghost" id="guideBtn">📖 دليل السرقات والمتطلبات</button>
+            <button class="btn btn-primary" id="addOpBtn">+ عملية جديدة</button>
+          </div>
         </div>
         <div class="case-grid" id="opsGrid"></div>
       </section>
@@ -309,7 +325,10 @@ svg{display:inline-block; vertical-align:middle;}
       </section>
 
       <section class="view" id="view-leaderboard">
-        <div class="section-title">الترتيب حسب النقاط</div>
+        <div class="section-title">
+          <span>الترتيب الأسبوعي <span id="weekLabel" class="mono" style="font-size:11px; color:var(--muted-2);"></span></span>
+          <button class="btn btn-sm btn-ghost" id="archiveBtn">🗄 الأرشيف الأسبوعي</button>
+        </div>
         <div id="leaderList"></div>
       </section>
 
@@ -429,7 +448,8 @@ const ICONS = {
   ann:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11v3a2 2 0 0 0 2 2h1l3 4v-4h6l3-9-9-3-9 3z"/></svg>',
   logs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
   settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.42.7.7 1.19.7H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-  points:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 9l9 13 9-13-9-7z"/><path d="M3 9h18M9 9l3-7 3 7M9 9l3 13 3-13"/></svg>'
+  points:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 9l9 13 9-13-9-7z"/><path d="M3 9h18M9 9l3-7 3 7M9 9l3 13 3-13"/></svg>',
+  guide:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
 };
 
 let membersCache=[], opsCache=[], annCache=[], logsCache=[], calCache=[], rolesCache={}, pointsSysCache=[], orgCache={name:"RED LINE", subtitle:"ORGANIZATION OS", logo:"🩸", colorPrimary:"#b3122a", colorSecondary:"#6e0c1c"};
@@ -514,6 +534,35 @@ const PERM_LABELS = {ops:"العمليات", members:"الأعضاء", points:"�
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function nowStr(){ return new Date().toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}); }
+function getWeekId(d=new Date()){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(),0,4));
+  const weekNum = 1 + Math.round(((date - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay()+6)%7)) / 7);
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2,'0')}`;
+}
+let weeklyRolloverDone = false;
+async function checkWeeklyRollover(){
+  if(weeklyRolloverDone) return;
+  weeklyRolloverDone = true;
+  const nowWeek = getWeekId();
+  if(!orgCache.currentWeekId){
+    await fsSet('org','main',{currentWeekId: nowWeek});
+    return;
+  }
+  if(orgCache.currentWeekId !== nowWeek){
+    for(const m of membersCache){
+      if((m.weeklyPoints||0) > 0){
+        try{ await setDoc(doc(db,'weeklyArchive', `${orgCache.currentWeekId}_${m.id}`), {weekId: orgCache.currentWeekId, memberId:m.id, name:m.name, points:m.weeklyPoints||0}); }
+        catch(e){ console.error('archive error', e); }
+      }
+      await fsSet('members', m.id, {weeklyPoints:0});
+    }
+    await fsSet('org','main',{currentWeekId: nowWeek});
+    await addLog(`بدأ أسبوع نقاط جديد (${nowWeek}) — تم أرشفة وتصفير نقاط الأسبوع الماضي`);
+  }
+}
 function can(perm){
   if(!currentUser) return false;
   const role = rolesCache[currentUser.rank];
@@ -574,7 +623,7 @@ async function seedIfEmpty(){
   }
   const memSnap = await getDocs(col('members'));
   if(memSnap.empty){
-    await addDoc(col('members'), {name:"المؤسس", pin:"1234", rank:"owner", points:0, online:false, joined:new Date().toISOString().slice(0,10), last:"—"});
+    await addDoc(col('members'), {name:"المؤسس", pin:"1234", rank:"owner", points:0, weeklyPoints:0, online:false, joined:new Date().toISOString().slice(0,10), last:"—"});
     await addLog("تم إنشاء الحساب الافتراضي (المؤسس / PIN: 1234)");
   }
 }
@@ -731,7 +780,7 @@ $('#registerSubmit').onclick = async ()=>{
     $('#registerError').style.display='block';
     return;
   }
-  const id = await fsAdd('members', {name, pin, rank:'guest', points:0, online:true, joined:new Date().toISOString().slice(0,10), last:'الآن'});
+  const id = await fsAdd('members', {name, pin, rank:'guest', points:0, weeklyPoints:0, online:true, joined:new Date().toISOString().slice(0,10), last:'الآن'});
   await addLog(`عضو جديد سجّل نفسه: ${name}`);
   loginAs({id, name, pin, rank:'guest'});
 };
@@ -744,6 +793,7 @@ async function loginAs(member){
   $('#appRoot').classList.add('active');
   renderNav();
   renderAll();
+  checkWeeklyRollover();
 }
 $('#logoutBtn').onclick = async ()=>{
   if(currentUser) await fsSet('members', currentUser.id, {online:false, last:nowStr()});
@@ -791,6 +841,7 @@ $('#changePinBtn').onclick = ()=>{
 const NAV_ITEMS = [
   {view:'dashboard', label:'لوحة التحكم', icon:'dashboard', perm:null},
   {view:'operations', label:'العمليات', icon:'ops', perm:null},
+  {view:'guide', label:'دليل العمليات', icon:'guide', perm:null},
   {view:'members', label:'الأعضاء', icon:'members', perm:null},
   {view:'leaderboard', label:'لوحة الصدارة', icon:'leader', perm:null},
   {view:'calendar', label:'التقويم', icon:'calendar', perm:null},
@@ -806,6 +857,7 @@ function renderNav(){
   $('#navList').innerHTML = items.map((n,i)=>`<div class="nav-item ${i===0?'active':''}" data-view="${n.view}">${ICONS[n.icon]}<span>${n.label}</span></div>`).join('');
   $$('.nav-item').forEach(item=>{
     item.addEventListener('click', ()=>{
+      if(item.dataset.view === 'guide'){ openGuideModal(); return; }
       $$('.nav-item').forEach(i=>i.classList.remove('active'));
       item.classList.add('active');
       $$('.view').forEach(v=>v.classList.remove('active'));
@@ -843,11 +895,28 @@ function renderDashboard(){
   const online = membersCache.filter(m=>m.online).length;
   const totalPoints = membersCache.reduce((a,m)=>a+(Number(m.points)||0),0);
 
-  $('#statGrid').innerHTML = [
-    ['إجمالي العمليات', total], ['عمليات جاهزة', ready], ['عمليات جارية', progress], ['عمليات مكتملة', completed],
-    ['الأعضاء المتصلين', online+' / '+membersCache.length], ['الأرباح المتوقعة', '$'+profit.toLocaleString()],
-    ['نسبة النجاح', success+'%'], ['إجمالي النقاط', totalPoints]
-  ].map(([label,num],i)=>`<div class="stat-card" style="animation-delay:${i*30}ms"><div class="stat-num">${num}</div><div class="stat-label">${label}</div></div>`).join('');
+  const statsDefs = [
+    {label:'إجمالي العمليات', value: total, format:v=>v},
+    {label:'عمليات جاهزة', value: ready, format:v=>v},
+    {label:'عمليات جارية', value: progress, format:v=>v},
+    {label:'عمليات مكتملة', value: completed, format:v=>v},
+    {label:'الأعضاء المتصلين', value: online, format:v=>v+' / '+membersCache.length},
+    {label:'الأرباح المتوقعة', value: profit, format:v=>'$'+v.toLocaleString()},
+    {label:'نسبة النجاح', value: success, format:v=>v+'%'},
+    {label:'إجمالي النقاط', value: totalPoints, format:v=>v}
+  ];
+  $('#statGrid').innerHTML = statsDefs.map((s,i)=>`<div class="stat-card" style="animation-delay:${i*30}ms"><div class="stat-num" id="statnum-${i}">0</div><div class="stat-label">${s.label}</div></div>`).join('');
+  statsDefs.forEach((s,i)=>{
+    const el = $('#statnum-'+i);
+    const target = s.value; const dur = 700; const start = performance.now();
+    function tick(now){
+      const p = Math.min(1,(now-start)/dur);
+      const val = Math.round(target*p);
+      el.textContent = s.format(val);
+      if(p<1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
 
   const recent = [...ops].slice(-3).reverse();
   $('#recentOps').innerHTML = recent.length ? recent.map(opCardHTML).join('') : emptyHTML('لا توجد عمليات بعد');
@@ -878,6 +947,7 @@ function opCardHTML(o){
     ${participants.length?`<div style="font-size:11px; color:var(--muted); margin-top:2px;">👥 المشاركون:</div>
     <div class="case-participants">${participants.map(p=>`<span class="participant-chip">${p}</span>`).join('')}</div>`:''}
     <div class="case-req">${reqs.map((r,idx)=>`<span class="chip ${r.have?'have':''} ${editable?'toggle-req':''}" data-opid="${o.id}" data-idx="${idx}">${r.have?'✓ ':''}${r.name}</span>`).join('')}</div>
+    ${o.notes?`<div style="font-size:12px; color:var(--muted); background:var(--panel-2); border:1px solid var(--line-soft); border-radius:4px; padding:8px 10px; margin-top:8px; line-height:1.6;">📝 ${o.notes}</div>`:''}
     <div class="case-foot">
       <span class="case-points">$${Number(o.profit||0).toLocaleString()}</span>
       ${editable?`<span style="display:flex; gap:6px;">
@@ -902,13 +972,47 @@ function bindCaseEvents(scope){
       await addLog(`تم حذف العملية: ${op?op.name:''}`);
     }
   });
-  $$(`${scope} .toggle-req`).forEach(c=>c.onclick=async ()=>{
+  $$(`${scope} .toggle-req`).forEach(c=>c.onclick=async (e)=>{
+    e.stopPropagation();
     const op = opsCache.find(x=>x.id===c.dataset.opid);
     if(!op) return;
     const reqs = Array.isArray(op.requirements) ? [...op.requirements] : (REQ_TEMPLATES[op.category]||[]).map(name=>({name, have:false}));
     reqs[c.dataset.idx] = {...reqs[c.dataset.idx], have: !reqs[c.dataset.idx].have};
     await fsSet('operations', op.id, {requirements:reqs});
   });
+  $$(`${scope} .case`).forEach(card=>card.onclick=()=>openOpDetailsModal(card.dataset.id));
+}
+function openOpDetailsModal(id){
+  const o = opsCache.find(x=>x.id===id);
+  if(!o) return;
+  const sm = statusMeta(o.status);
+  const reqs = Array.isArray(o.requirements) ? o.requirements : (REQ_TEMPLATES[o.category]||[]).map(name=>({name, have:false}));
+  const participants = Array.isArray(o.participants) ? o.participants : [];
+  openModal(`
+    <h3>${o.name}</h3>
+    <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <span class="stamp ${sm.cls}" style="position:static; transform:none; display:inline-block;">${sm.label}</span>
+      <span class="points-badge" style="position:static;">🏆 ${Number(o.points||0)}</span>
+      <span class="case-points" style="align-self:center;">$${Number(o.profit||0).toLocaleString()}</span>
+    </div>
+    <div class="case-meta" style="margin-bottom:12px;">
+      <div>📂 الفئة: <b>${o.category||'—'}</b></div>
+      <div>📅 <b>${o.date||'—'}</b> — ${o.time||'—'}</div>
+      <div>📍 ${o.location||'—'}</div>
+      <div>👤 القائد: <b>${o.leader||'—'}</b></div>
+    </div>
+    ${participants.length?`<div class="field"><label>المشاركون</label><div class="case-participants">${participants.map(p=>`<span class="participant-chip">${p}</span>`).join('')}</div></div>`:''}
+    ${reqs.length?`<div class="field"><label>المتطلبات</label><div class="case-req">${reqs.map(r=>`<span class="chip ${r.have?'have':''}">${r.have?'✓ ':''}${r.name}</span>`).join('')}</div></div>`:''}
+    <div class="field"><label>ملاحظات</label>
+      <div style="background:var(--panel-2); border:1px solid var(--line-soft); border-radius:6px; padding:12px; font-size:13px; color:var(--ink); min-height:40px; line-height:1.7;">${o.notes ? o.notes : '<span style="color:var(--muted-2);">لا توجد ملاحظات</span>'}</div>
+    </div>
+    <div class="modal-actions">
+      ${can('ops')?`<button class="btn btn-primary" id="detailsEditBtn">تعديل العملية</button>`:''}
+      <button class="btn btn-ghost" id="cancelModalBtn">إغلاق</button>
+    </div>
+  `);
+  $('#cancelModalBtn').onclick = closeModal;
+  if($('#detailsEditBtn')) $('#detailsEditBtn').onclick = ()=>openOpModal(o.id);
 }
 function openOpModal(id){
   const op = id ? opsCache.find(o=>o.id===id) : null;
@@ -987,7 +1091,10 @@ function openOpModal(id){
     if(data.status==='completed' && !alreadyAwarded && data.points>0 && data.leader){
       const leaderMember = membersCache.find(m=>m.name.trim()===data.leader.trim());
       if(leaderMember){
-        await fsSet('members', leaderMember.id, {points:(Number(leaderMember.points)||0)+data.points});
+        await fsSet('members', leaderMember.id, {
+          points:(Number(leaderMember.points)||0)+data.points,
+          weeklyPoints:(Number(leaderMember.weeklyPoints)||0)+data.points
+        });
         await addLog(`تم منح ${data.points} نقطة لـ ${leaderMember.name} عن عملية: ${name}`);
       }
       data.pointsAwarded = true;
@@ -998,6 +1105,28 @@ function openOpModal(id){
   };
 }
 $('#addOpBtn').onclick = ()=> openOpModal(null);
+function openGuideModal(){
+  const cats = Object.keys(REQ_TEMPLATES);
+  openModal(`
+    <h3>📖 دليل السرقات والمتطلبات</h3>
+    <div class="guide-grid">
+      ${cats.map(c=>{
+        const reqs = REQ_TEMPLATES[c];
+        const pts = POINTS_BY_CATEGORY[c] || 0;
+        return `<div class="guide-card">
+          <h4>${c} <span class="gpts">🏆 ${pts}</span></h4>
+          ${reqs.length ? `<div class="case-req">${reqs.map(r=>`<span class="chip">${r}</span>`).join('')}</div>` : `<div style="font-size:11px; color:var(--muted-2);">لا تحتاج أدوات خاصة</div>`}
+          ${CATEGORY_NOTE_HINTS[c] ? `<div style="font-size:11px; color:var(--muted); margin-top:8px;">📌 ${CATEGORY_NOTE_HINTS[c]}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelModalBtn">إغلاق</button>
+    </div>
+  `);
+  $('#cancelModalBtn').onclick = closeModal;
+}
+$('#guideBtn').onclick = openGuideModal;
 function reqRowHTML(r,i){
   return `<div class="req-row">
     <input class="req-name" value="${r.name||''}" placeholder="اسم المتطلب">
@@ -1066,7 +1195,7 @@ function openMemberModal(id){
     if(id){ await fsSet('members', id, data); await addLog(`تم تعديل بيانات العضو: ${name}`); }
     else{
       if(!pin){ alert('حدد رمز PIN للعضو الجديد'); return; }
-      data.pin = pin; data.points = data.points||0; data.online=false; data.joined = new Date().toISOString().slice(0,10); data.last='—';
+      data.pin = pin; data.points = data.points||0; data.weeklyPoints = 0; data.online=false; data.joined = new Date().toISOString().slice(0,10); data.last='—';
       await fsAdd('members', data);
       await addLog(`تم إضافة عضو جديد: ${name}`);
     }
@@ -1076,15 +1205,39 @@ function openMemberModal(id){
 
 $('#addMemberBtn').onclick = ()=> openMemberModal(null);
 function renderLeaderboard(){
-  const sorted = [...membersCache].sort((a,b)=>(b.points||0)-(a.points||0));
+  $('#weekLabel').textContent = orgCache.currentWeekId ? `(${orgCache.currentWeekId})` : '';
+  const sorted = [...membersCache].sort((a,b)=>(b.weeklyPoints||0)-(a.weeklyPoints||0));
   $('#leaderList').innerHTML = sorted.length ? sorted.map((m,i)=>`
     <div class="leader-row" style="animation-delay:${i*30}ms">
       <div class="leader-rank">${i+1}</div>
       <span class="avatar">${(m.name||'?').trim()[0]||'?'}</span>
-      <div class="leader-name">${m.name} <span class="rank-badge" style="margin-right:6px;">${rankLabel(m.rank)}</span></div>
-      <div class="leader-points">${m.points||0} نقطة</div>
+      <div class="leader-name">${m.name} <span class="rank-badge" style="margin-right:6px;">${rankLabel(m.rank)}</span>
+        <div style="font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono'; margin-top:2px;">إجمالي كلي: ${m.points||0}</div>
+      </div>
+      <div class="leader-points">${m.weeklyPoints||0} نقطة</div>
     </div>`).join('') : emptyHTML('لا يوجد أعضاء بعد');
 }
+$('#archiveBtn').onclick = async ()=>{
+  openModal(`<h3>🗄 الأرشيف الأسبوعي</h3><div id="archiveContent" style="font-size:13px; color:var(--muted);">جاري التحميل...</div><div class="modal-actions"><button class="btn btn-ghost" id="cancelModalBtn">إغلاق</button></div>`);
+  $('#cancelModalBtn').onclick = closeModal;
+  try{
+    const snap = await getDocs(col('weeklyArchive'));
+    const rows = snap.docs.map(d=>d.data());
+    if(!rows.length){ $('#archiveContent').innerHTML = emptyHTML('لا يوجد أرشيف أسابيع سابقة بعد'); return; }
+    const byWeek = {};
+    rows.forEach(r=>{ (byWeek[r.weekId] = byWeek[r.weekId]||[]).push(r); });
+    const weeks = Object.keys(byWeek).sort().reverse();
+    $('#archiveContent').innerHTML = weeks.map(w=>{
+      const list = byWeek[w].sort((a,b)=>(b.points||0)-(a.points||0));
+      return `<div style="margin-bottom:16px;"><div style="font-family:'JetBrains Mono'; color:var(--red-bright); font-size:12px; margin-bottom:6px;">الأسبوع ${w}</div>
+        ${list.map((r,i)=>`<div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--panel-2); border-radius:4px; margin-bottom:4px; font-size:12px;"><span>${i+1}. ${r.name}</span><span class="mono" style="color:var(--gold);">${r.points} نقطة</span></div>`).join('')}
+      </div>`;
+    }).join('');
+  }catch(e){
+    $('#archiveContent').innerHTML = emptyHTML('تعذر تحميل الأرشيف');
+    console.error(e);
+  }
+};
 
 function calRowHTML(c){
   return `<div class="cal-row">
