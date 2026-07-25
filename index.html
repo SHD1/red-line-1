@@ -119,6 +119,9 @@ svg{display:inline-block; vertical-align:middle;}
 .stamp.progress{color:var(--red-bright); border-color:var(--red-bright);}
 .stamp.completed{color:var(--green); border-color:var(--green);}
 .stamp.cancelled{color:var(--grey-status); border-color:var(--grey-status); text-decoration:line-through;}
+.points-badge{position:absolute; top:14px; right:14px; font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:var(--gold); background:rgba(201,162,39,.1); border:1px solid var(--gold); border-radius:20px; padding:3px 10px; display:flex; align-items:center; gap:4px;}
+.case-participants{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
+.participant-chip{font-size:10px; background:var(--panel-2); border:1px solid var(--line-soft); padding:3px 8px; border-radius:20px; color:var(--ink);}
 .case-foot{display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line-soft);}
 .case-points{font-family:'JetBrains Mono'; font-size:12px; color:var(--gold);}
 
@@ -860,16 +863,20 @@ function renderDashboard(){
 function opCardHTML(o){
   const sm = statusMeta(o.status);
   const reqs = Array.isArray(o.requirements) ? o.requirements : (REQ_TEMPLATES[o.category]||[]).map(name=>({name, have:false}));
+  const participants = Array.isArray(o.participants) ? o.participants : [];
   const editable = can('ops');
   return `<div class="case" data-id="${o.id}">
     <div class="stamp ${sm.cls}">${sm.label}</div>
-    <div class="case-cat">${o.category||'—'}</div>
+    <div class="points-badge">🏆 ${Number(o.points||0)}</div>
+    <div class="case-cat" style="margin-top:22px;">${o.category||'—'}</div>
     <div class="case-name">${o.name}</div>
     <div class="case-meta">
       <div>📅 <b>${o.date||'—'}</b> — ${o.time||'—'}</div>
       <div>📍 ${o.location||'—'}</div>
       <div>👤 القائد: <b>${o.leader||'—'}</b></div>
     </div>
+    ${participants.length?`<div style="font-size:11px; color:var(--muted); margin-top:2px;">👥 المشاركون:</div>
+    <div class="case-participants">${participants.map(p=>`<span class="participant-chip">${p}</span>`).join('')}</div>`:''}
     <div class="case-req">${reqs.map((r,idx)=>`<span class="chip ${r.have?'have':''} ${editable?'toggle-req':''}" data-opid="${o.id}" data-idx="${idx}">${r.have?'✓ ':''}${r.name}</span>`).join('')}</div>
     <div class="case-foot">
       <span class="case-points">$${Number(o.profit||0).toLocaleString()}</span>
@@ -932,6 +939,7 @@ function openOpModal(id){
       <div class="field"><label>الموقع</label><input id="f-loc" value="${op&&op.location?op.location:''}"></div>
       <div class="field"><label>القائد</label><input id="f-leader" value="${op&&op.leader?op.leader:''}"></div>
     </div>
+    <div class="field"><label>المشاركون (افصل بين الأسماء بفاصلة ,)</label><input id="f-participants" value="${op&&Array.isArray(op.participants)?op.participants.join('، '):''}" placeholder="مثال: خالد، سلطان، فيصل"></div>
     <div class="row2">
       <div class="field"><label>الأرباح المتوقعة ($)</label><input id="f-profit" type="number" value="${op&&op.profit?op.profit:''}"></div>
       <div class="field"><label>النقاط 🏆</label><input id="f-points" type="number" value="${op&&op.points!=null?op.points:(POINTS_BY_CATEGORY[cat]||0)}"></div>
@@ -968,10 +976,11 @@ function openOpModal(id){
       name: row.querySelector('.req-name').value.trim(),
       have: row.querySelector('.req-have').checked
     })).filter(r=>r.name);
+    const participants = $('#f-participants').value.split(/[,،]/).map(s=>s.trim()).filter(Boolean);
     const data = {
       name, category:$('#f-cat').value, status:$('#f-status').value,
       date:$('#f-date').value, time:$('#f-time').value, location:$('#f-loc').value,
-      leader:$('#f-leader').value, profit:Number($('#f-profit').value)||0, points:Number($('#f-points').value)||0, notes:$('#f-notes').value,
+      leader:$('#f-leader').value, participants, profit:Number($('#f-profit').value)||0, points:Number($('#f-points').value)||0, notes:$('#f-notes').value,
       requirements: reqNames
     };
     const alreadyAwarded = !!(op && op.pointsAwarded);
