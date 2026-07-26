@@ -31,6 +31,15 @@ body{
 .mono{font-family:'JetBrains Mono',monospace;}
 svg{display:inline-block; vertical-align:middle;}
 .redline-scan{position:fixed; top:0; left:0; right:0; height:2px; z-index:9999; pointer-events:none; overflow:hidden; background:rgba(179,18,42,.08);}
+.ambient-glow{position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(600px 450px at 15% 85%, rgba(179,18,42,.07), transparent 60%),
+    radial-gradient(550px 400px at 90% 15%, rgba(179,18,42,.05), transparent 60%);
+  background-size:150% 150%, 150% 150%;
+  animation:ambientDrift 26s ease-in-out infinite;
+}
+@keyframes ambientDrift{0%,100%{background-position:15% 85%, 90% 15%;} 50%{background-position:25% 75%, 78% 28%;}}
+@keyframes viewFade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
 .redline-scan::before{content:''; position:absolute; top:0; bottom:0; width:25%; background:linear-gradient(90deg, transparent, var(--red-bright), var(--gold), var(--red-bright), transparent); box-shadow:0 0 12px var(--red-bright); animation:scanMove 5s linear infinite;}
 @keyframes scanMove{0%{left:-25%;} 100%{left:100%;}}
 
@@ -80,7 +89,7 @@ svg{display:inline-block; vertical-align:middle;}
 
 .nav{padding:12px 10px; flex:1; overflow-y:auto;}
 .nav-group-label{font-size:10px; color:var(--muted-2); letter-spacing:.15em; padding:12px 10px 6px; font-family:'JetBrains Mono';}
-.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:2px; border-radius:var(--radius); cursor:pointer; color:var(--muted); font-size:13.5px; font-weight:500; border-right:2px solid transparent; transition:.15s; user-select:none;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:2px; border-radius:var(--radius); cursor:pointer; color:var(--muted); font-size:13.5px; font-weight:500; border-right:2px solid transparent; transition:.2s cubic-bezier(.4,0,.2,1); user-select:none;}
 .nav-item:hover{background:var(--panel); color:var(--ink);}
 .nav-item.active{background:linear-gradient(90deg, rgba(179,18,42,.18), transparent); color:var(--ink); border-right-color:var(--red);}
 .nav-item svg{width:16px; height:16px; opacity:.85; flex-shrink:0;}
@@ -100,7 +109,7 @@ svg{display:inline-block; vertical-align:middle;}
 .search:focus{outline:none; border-color:var(--red);}
 .content{padding:24px 28px 60px; flex:1;}
 .view{display:none;}
-.view.active{display:block; animation:fadeIn .25s ease;}
+.view.active{display:block; animation:viewFade .35s cubic-bezier(.4,0,.2,1);}
 
 .btn{background:var(--panel-2); border:1px solid var(--line); color:var(--ink); padding:9px 16px; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; font-family:'Tajawal'; transition:.15s; display:inline-flex; align-items:center; gap:6px;}
 .btn:hover{border-color:var(--muted-2); transform:translateY(-1px);}
@@ -178,6 +187,19 @@ svg{display:inline-block; vertical-align:middle;}
 .pin{color:var(--gold); font-size:11px;}
 
 .cal-row{display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--panel); border:1px solid var(--line); border-radius:6px; margin-bottom:6px;}
+.mcal-nav{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px;}
+.mcal-month-label{font-family:'Oswald'; font-size:19px; letter-spacing:.03em; flex:1; text-align:center;}
+.mcal-header{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; color:var(--muted-2); margin-bottom:8px; font-family:'JetBrains Mono'; letter-spacing:.05em;}
+.mcal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+.mcal-cell{position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--panel); border:1px solid var(--line-soft); transition:.2s;}
+.mcal-cell.empty{background:transparent; border:none;}
+.mcal-cell:not(.empty):hover{border-color:var(--red-deep);}
+.mcal-day{font-family:'Oswald'; font-size:14px; color:var(--ink); width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:.2s;}
+.mcal-day.today{background:var(--red); color:#fff; box-shadow:0 0 12px var(--red-bright);}
+.mcal-dot{position:absolute; bottom:6px; width:5px; height:5px; border-radius:50%; background:var(--gold);}
+.mcal-cell.week-ended{opacity:.45;}
+.mcal-cell.week-ended::after{content:''; position:absolute; top:50%; left:-3px; right:-3px; height:2px; background:var(--grey-status); transform:translateY(-50%); z-index:1;}
+.mcal-cell.week-current{border-color:var(--red-deep); background:rgba(179,18,42,.08);}
 .cal-date{font-family:'JetBrains Mono'; font-size:12px; color:var(--red-bright); background:var(--panel-2); padding:4px 8px; border-radius:4px;}
 
 .overlay{position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:100;}
@@ -276,6 +298,7 @@ svg{display:inline-block; vertical-align:middle;}
   </div>
 </div>
 
+<div class="ambient-glow"></div>
 <div class="app" id="appRoot">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
@@ -359,16 +382,28 @@ svg{display:inline-block; vertical-align:middle;}
           <span>الترتيب الأسبوعي <span id="weekLabel" class="mono" style="font-size:11px; color:var(--muted-2);"></span></span>
           <button class="btn btn-sm btn-ghost" id="archiveBtn">🗄 الأرشيف الأسبوعي</button>
         </div>
+        <div id="gangPointsBanner" style="margin-bottom:14px;"></div>
         <div id="leaderList"></div>
       </section>
 
       <section class="view" id="view-calendar">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div class="mcal-nav">
+          <button class="btn btn-sm btn-ghost" id="calPrevBtn">‹</button>
+          <div id="monthLabel" class="mcal-month-label"></div>
+          <button class="btn btn-sm btn-ghost" id="calTodayBtn">اليوم</button>
+          <button class="btn btn-sm btn-ghost" id="calNextBtn">›</button>
+        </div>
+        <div class="mcal-header">
+          <div>أحد</div><div>اثنين</div><div>ثلاثاء</div><div>أربعاء</div><div>خميس</div><div>جمعة</div><div>سبت</div>
+        </div>
+        <div class="mcal-grid" id="monthCalendarGrid"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:22px 0 16px;">
           <div style="color:var(--muted); font-size:13px;">مواعيد الاجتماعات والعمليات المجدولة</div>
           <button class="btn btn-primary" id="addCalBtn">+ حدث جديد</button>
         </div>
         <div id="calList"></div>
-        <div class="section-title">تقويم الأسابيع</div>
+        <div class="section-title">سجل الأسابيع</div>
         <div id="weeksPanel"></div>
       </section>
 
@@ -443,6 +478,9 @@ import {
   getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc,
   onSnapshot, getDoc, getDocs, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  initializeAppCheck, ReCaptchaV3Provider
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAcGc3q9nOLOyCOrUzwgfkR8UUvqAv1Z9M",
@@ -452,6 +490,7 @@ const firebaseConfig = {
   messagingSenderId: "238422669438",
   appId: "1:238422669438:web:8866bec2e0d1d6366e802f"
 };
+const RECAPTCHA_SITE_KEY = "6LdNsmYtAAAAALhWYfcGMJX3rRmE_Vnu_OBs3Rea";
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -459,6 +498,14 @@ const $$ = s => document.querySelectorAll(s);
 let app, auth, db;
 try{
   app = initializeApp(firebaseConfig);
+  try{
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+      isTokenAutoRefreshEnabled: true
+    });
+  }catch(appCheckErr){
+    console.error('App Check init failed (continuing without it):', appCheckErr);
+  }
   auth = getAuth(app);
   db = getFirestore(app);
 }catch(e){
@@ -577,13 +624,22 @@ function formatTime12(t){
   h = h % 12; if(h===0) h = 12;
   return `${h}:${m} ${period}`;
 }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function localDateStr(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
 function getWeekStart(d=new Date()){
   const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   date.setDate(date.getDate() - date.getDay());
   return date;
 }
 function getWeekId(d=new Date()){
-  return getWeekStart(d).toISOString().slice(0,10);
+  return localDateStr(getWeekStart(d));
+}
+function getMonthId(d=new Date()){
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+}
+function monthLabel(monthIdStr){
+  const [y,m] = monthIdStr.split('-').map(Number);
+  return new Date(y, m-1, 1).toLocaleDateString('ar-EG',{month:'long', year:'numeric'});
 }
 function weekRangeLabel(weekIdStr){
   const start = new Date(weekIdStr+'T00:00:00');
@@ -591,30 +647,59 @@ function weekRangeLabel(weekIdStr){
   const fmt = dt=>dt.toLocaleDateString('ar-EG',{day:'numeric',month:'short'});
   return `${fmt(start)} – ${fmt(end)}`;
 }
-let weeklyRolloverDone = false;
+let rolloverInFlight = false;
+let rolloverIntervalStarted = false;
 async function checkWeeklyRollover(){
-  if(weeklyRolloverDone) return;
-  weeklyRolloverDone = true;
-  const nowWeek = getWeekId();
-  if(!orgCache.currentWeekId){
-    await fsSet('org','main',{currentWeekId: nowWeek});
-    return;
-  }
-  if(orgCache.currentWeekId !== nowWeek){
-    for(const m of membersCache){
-      if((m.weeklyPoints||0) > 0){
-        try{ await setDoc(doc(db,'weeklyArchive', `${orgCache.currentWeekId}_${m.id}`), {weekId: orgCache.currentWeekId, memberId:m.id, name:m.name, points:m.weeklyPoints||0}); }
-        catch(e){ console.error('archive error', e); }
+  if(rolloverInFlight) return;
+  rolloverInFlight = true;
+  try{
+    const nowWeek = getWeekId();
+    const nowMonth = getMonthId();
+    const orgUpdates = {};
+    let weekChanged = false, monthChanged = false;
+
+    if(!orgCache.currentWeekId){ orgUpdates.currentWeekId = nowWeek; }
+    else if(orgCache.currentWeekId !== nowWeek){ weekChanged = true; }
+
+    if(!orgCache.currentMonthId){ orgUpdates.currentMonthId = nowMonth; }
+    else if(orgCache.currentMonthId !== nowMonth){ monthChanged = true; }
+
+    if(weekChanged){
+      for(const m of membersCache){
+        if((m.weeklyPoints||0) > 0){
+          try{ await setDoc(doc(db,'weeklyArchive', `${orgCache.currentWeekId}_${m.id}`), {weekId: orgCache.currentWeekId, memberId:m.id, name:m.name, points:m.weeklyPoints||0}); }
+          catch(e){ console.error('archive error', e); }
+        }
+        await fsSet('members', m.id, {weeklyPoints:0});
       }
-      await fsSet('members', m.id, {weeklyPoints:0});
-    }
-    for(const o of opsCache){
-      if(o.status==='ready' || o.status==='progress'){
-        await fsSet('operations', o.id, {status:'expired'});
+      for(const o of opsCache){
+        if(o.status==='ready' || o.status==='progress'){
+          await fsSet('operations', o.id, {status:'expired'});
+        }
       }
+      orgUpdates.currentWeekId = nowWeek;
+      orgUpdates.gangWeeklyPoints = 0;
+      await addLog(`بدأ أسبوع جديد (${nowWeek}) — تم أرشفة النقاط، تصفير نقاط الأسبوع، وإنهاء العمليات المفتوحة من الأسبوع الماضي`);
     }
-    await fsSet('org','main',{currentWeekId: nowWeek, gangWeeklyPoints:0});
-    await addLog(`بدأ أسبوع جديد (${nowWeek}) — تم أرشفة النقاط، تصفير نقاط الأسبوع، وإنهاء العمليات المفتوحة من الأسبوع الماضي`);
+
+    if(monthChanged){
+      for(const m of membersCache){
+        if((m.monthlyPoints||0) > 0){
+          try{ await setDoc(doc(db,'monthlyArchive', `${orgCache.currentMonthId}_${m.id}`), {monthId: orgCache.currentMonthId, memberId:m.id, name:m.name, points:m.monthlyPoints||0}); }
+          catch(e){ console.error('monthly archive error', e); }
+        }
+        await fsSet('members', m.id, {monthlyPoints:0});
+      }
+      orgUpdates.currentMonthId = nowMonth;
+      orgUpdates.gangMonthlyPoints = 0;
+      await addLog(`بدأ شهر نقاط جديد (${monthLabel(nowMonth)})`);
+    }
+
+    if(Object.keys(orgUpdates).length){
+      await fsSet('org','main', orgUpdates);
+    }
+  } finally {
+    rolloverInFlight = false;
   }
 }
 function can(perm){
@@ -677,7 +762,7 @@ async function seedIfEmpty(){
   }
   const memSnap = await getDocs(col('members'));
   if(memSnap.empty){
-    await addDoc(col('members'), {name:"المؤسس", pin:"1234", rank:"owner", points:0, weeklyPoints:0, online:false, joined:new Date().toISOString().slice(0,10), last:"—"});
+    await addDoc(col('members'), {name:"المؤسس", pin:"1234", rank:"owner", points:0, weeklyPoints:0, monthlyPoints:0, online:false, joined:new Date().toISOString().slice(0,10), last:"—"});
     await addLog("تم إنشاء الحساب الافتراضي (المؤسس / PIN: 1234)");
   }
 }
@@ -839,7 +924,7 @@ $('#registerSubmit').onclick = async ()=>{
     $('#registerError').style.display='block';
     return;
   }
-  const id = await fsAdd('members', {name, pin, rank:'guest', points:0, weeklyPoints:0, online:true, joined:new Date().toISOString().slice(0,10), last:'الآن'});
+  const id = await fsAdd('members', {name, pin, rank:'guest', points:0, weeklyPoints:0, monthlyPoints:0, online:true, joined:new Date().toISOString().slice(0,10), last:'الآن'});
   await addLog(`عضو جديد سجّل نفسه: ${name}`);
   loginAs({id, name, pin, rank:'guest'});
 };
@@ -853,6 +938,10 @@ async function loginAs(member){
   renderNav();
   renderAll();
   checkWeeklyRollover();
+  if(!rolloverIntervalStarted){
+    rolloverIntervalStarted = true;
+    setInterval(()=>{ if(currentUser) checkWeeklyRollover(); }, 30*60*1000);
+  }
 }
 $('#logoutBtn').onclick = async ()=>{
   if(currentUser) await fsSet('members', currentUser.id, {online:false, last:nowStr()});
@@ -1164,7 +1253,8 @@ async function awardOperationPoints(data, opName){
   if(GANG_WIDE_CATEGORIES.includes(data.category)){
     await fsSet('org','main',{
       gangPoints:(Number(orgCache.gangPoints)||0)+data.points,
-      gangWeeklyPoints:(Number(orgCache.gangWeeklyPoints)||0)+data.points
+      gangWeeklyPoints:(Number(orgCache.gangWeeklyPoints)||0)+data.points,
+      gangMonthlyPoints:(Number(orgCache.gangMonthlyPoints)||0)+data.points
     });
     await addLog(`تم منح ${data.points} نقطة للعصابة كاملة عن: ${opName}`);
   }else{
@@ -1174,7 +1264,8 @@ async function awardOperationPoints(data, opName){
       if(member){
         await fsSet('members', member.id, {
           points:(Number(member.points)||0)+data.points,
-          weeklyPoints:(Number(member.weeklyPoints)||0)+data.points
+          weeklyPoints:(Number(member.weeklyPoints)||0)+data.points,
+          monthlyPoints:(Number(member.monthlyPoints)||0)+data.points
         });
         await addLog(`تم منح ${data.points} نقطة لـ ${member.name} عن: ${opName}`);
       }
@@ -1271,7 +1362,7 @@ function openMemberModal(id){
     if(id){ await fsSet('members', id, data); await addLog(`تم تعديل بيانات العضو: ${name}`); }
     else{
       if(!pin){ alert('حدد رمز PIN للعضو الجديد'); return; }
-      data.pin = pin; data.points = data.points||0; data.weeklyPoints = 0; data.online=false; data.joined = new Date().toISOString().slice(0,10); data.last='—';
+      data.pin = pin; data.points = data.points||0; data.weeklyPoints = 0; data.monthlyPoints = 0; data.online=false; data.joined = new Date().toISOString().slice(0,10); data.last='—';
       await fsAdd('members', data);
       await addLog(`تم إضافة عضو جديد: ${name}`);
     }
@@ -1310,13 +1401,21 @@ function renderContributions(){
 }
 function renderLeaderboard(){
   $('#weekLabel').textContent = orgCache.currentWeekId ? `(${orgCache.currentWeekId})` : '';
+  const gangWeekly = Number(orgCache.gangWeeklyPoints)||0;
+  const gangMonthly = Number(orgCache.gangMonthlyPoints)||0;
+  const gangBanner = $('#gangPointsBanner');
+  if(gangBanner) gangBanner.innerHTML = `<div class="leader-row" style="border-color:var(--gold); background:rgba(201,162,39,.06);">
+    <div style="font-size:20px;">🏴</div>
+    <div class="leader-name">نقاط العصابة <div style="font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono'; margin-top:2px;">هذا الشهر: ${gangMonthly}</div></div>
+    <div class="leader-points">${gangWeekly} نقطة</div>
+  </div>`;
   const sorted = [...membersCache].sort((a,b)=>(b.weeklyPoints||0)-(a.weeklyPoints||0));
   $('#leaderList').innerHTML = sorted.length ? sorted.map((m,i)=>`
     <div class="leader-row" style="animation-delay:${i*30}ms">
       <div class="leader-rank">${i+1}</div>
       <span class="avatar">${(m.name||'?').trim()[0]||'?'}</span>
       <div class="leader-name">${m.name} <span class="rank-badge" style="margin-right:6px;">${rankLabel(m.rank)}</span>
-        <div style="font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono'; margin-top:2px;">إجمالي كلي: ${m.points||0}</div>
+        <div style="font-size:11px; color:var(--muted-2); font-family:'JetBrains Mono'; margin-top:2px;">هذا الشهر: ${m.monthlyPoints||0} · إجمالي كلي: ${m.points||0}</div>
       </div>
       <div class="leader-points">${m.weeklyPoints||0} نقطة</div>
     </div>`).join('') : emptyHTML('لا يوجد أعضاء بعد');
@@ -1350,7 +1449,44 @@ function calRowHTML(c){
     ${can('cal')?`<button class="btn btn-sm btn-danger del-cal" data-id="${c.id}">حذف</button>`:''}
   </div>`;
 }
+let calendarViewDate = new Date();
+function renderMonthCalendar(){
+  const grid = $('#monthCalendarGrid');
+  if(!grid) return;
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const currentWeekStart = orgCache.currentWeekId ? new Date(orgCache.currentWeekId+'T00:00:00') : getWeekStart();
+  const currentWeekEnd = new Date(currentWeekStart); currentWeekEnd.setDate(currentWeekEnd.getDate()+6);
+
+  $('#monthLabel').textContent = firstDay.toLocaleDateString('ar-EG',{month:'long', year:'numeric'});
+
+  let cells = '';
+  for(let i=0;i<startOffset;i++) cells += `<div class="mcal-cell empty"></div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const dateObj = new Date(year, month, day);
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const isPastWeek = dateObj < currentWeekStart;
+    const isCurrentWeek = dateObj >= currentWeekStart && dateObj <= currentWeekEnd;
+    const hasEvents = calCache.some(c=>c.date===dateStr);
+    cells += `<div class="mcal-cell ${isPastWeek?'week-ended':''} ${isCurrentWeek?'week-current':''}">
+      <span class="mcal-day ${isToday?'today':''}">${day}</span>
+      ${hasEvents?'<span class="mcal-dot"></span>':''}
+    </div>`;
+  }
+  grid.innerHTML = cells;
+}
+$('#calPrevBtn').onclick = ()=>{ calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth()-1, 1); renderMonthCalendar(); };
+$('#calNextBtn').onclick = ()=>{ calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth()+1, 1); renderMonthCalendar(); };
+$('#calTodayBtn').onclick = ()=>{ calendarViewDate = new Date(); renderMonthCalendar(); };
+
 function renderCalendar(){
+  renderMonthCalendar();
   const sorted = [...calCache].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   $('#calList').innerHTML = sorted.length ? sorted.map(calRowHTML).join('') : emptyHTML('لا توجد أحداث بعد');
   $('#addCalBtn').style.display = can('cal') ? 'inline-flex' : 'none';
