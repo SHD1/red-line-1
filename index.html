@@ -187,18 +187,19 @@ svg{display:inline-block; vertical-align:middle;}
 .pin{color:var(--gold); font-size:11px;}
 
 .cal-row{display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--panel); border:1px solid var(--line); border-radius:6px; margin-bottom:6px;}
-.mcal-nav{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px;}
-.mcal-month-label{font-family:'Oswald'; font-size:19px; letter-spacing:.03em; flex:1; text-align:center;}
-.mcal-header{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; color:var(--muted-2); margin-bottom:8px; font-family:'JetBrains Mono'; letter-spacing:.05em;}
-.mcal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
-.mcal-cell{position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; background:var(--panel); border:1px solid var(--line-soft); transition:.2s;}
+.mcal-widget{max-width:340px; margin:0 auto 24px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px;}
+.mcal-nav{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px;}
+.mcal-month-label{font-family:'Oswald'; font-size:15px; letter-spacing:.02em; flex:1; text-align:center;}
+.mcal-header{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:9px; color:var(--muted-2); margin-bottom:6px; font-family:'JetBrains Mono'; letter-spacing:.02em;}
+.mcal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+.mcal-cell{position:relative; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:6px; background:var(--panel-2); border:1px solid var(--line-soft); transition:.2s;}
 .mcal-cell.empty{background:transparent; border:none;}
 .mcal-cell:not(.empty):hover{border-color:var(--red-deep);}
-.mcal-day{font-family:'Oswald'; font-size:14px; color:var(--ink); width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:.2s;}
-.mcal-day.today{background:var(--red); color:#fff; box-shadow:0 0 12px var(--red-bright);}
-.mcal-dot{position:absolute; bottom:6px; width:5px; height:5px; border-radius:50%; background:var(--gold);}
-.mcal-cell.week-ended{opacity:.45;}
-.mcal-cell.week-ended::after{content:''; position:absolute; top:50%; left:-3px; right:-3px; height:2px; background:var(--grey-status); transform:translateY(-50%); z-index:1;}
+.mcal-day{font-family:'Oswald'; font-size:11px; color:var(--ink); width:20px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:.2s;}
+.mcal-day.today{background:var(--red); color:#fff; box-shadow:0 0 10px var(--red-bright);}
+.mcal-dot{position:absolute; bottom:3px; width:4px; height:4px; border-radius:50%; background:var(--gold);}
+.mcal-cell.week-ended{opacity:.4;}
+.mcal-cell.week-ended::after{content:''; position:absolute; top:50%; left:-2px; right:-2px; height:1.5px; background:var(--grey-status); transform:translateY(-50%); z-index:1;}
 .mcal-cell.week-current{border-color:var(--red-deep); background:rgba(179,18,42,.08);}
 .cal-date{font-family:'JetBrains Mono'; font-size:12px; color:var(--red-bright); background:var(--panel-2); padding:4px 8px; border-radius:4px;}
 
@@ -387,16 +388,18 @@ svg{display:inline-block; vertical-align:middle;}
       </section>
 
       <section class="view" id="view-calendar">
-        <div class="mcal-nav">
-          <button class="btn btn-sm btn-ghost" id="calPrevBtn">‹</button>
-          <div id="monthLabel" class="mcal-month-label"></div>
-          <button class="btn btn-sm btn-ghost" id="calTodayBtn">اليوم</button>
-          <button class="btn btn-sm btn-ghost" id="calNextBtn">›</button>
+        <div class="mcal-widget">
+          <div class="mcal-nav">
+            <button class="btn btn-sm btn-ghost" id="calPrevBtn">‹</button>
+            <div id="monthLabel" class="mcal-month-label"></div>
+            <button class="btn btn-sm btn-ghost" id="calTodayBtn">اليوم</button>
+            <button class="btn btn-sm btn-ghost" id="calNextBtn">›</button>
+          </div>
+          <div class="mcal-header">
+            <div>أحد</div><div>اثنين</div><div>ثلاثاء</div><div>أربعاء</div><div>خميس</div><div>جمعة</div><div>سبت</div>
+          </div>
+          <div class="mcal-grid" id="monthCalendarGrid"></div>
         </div>
-        <div class="mcal-header">
-          <div>أحد</div><div>اثنين</div><div>ثلاثاء</div><div>أربعاء</div><div>خميس</div><div>جمعة</div><div>سبت</div>
-        </div>
-        <div class="mcal-grid" id="monthCalendarGrid"></div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin:22px 0 16px;">
           <div style="color:var(--muted); font-size:13px;">مواعيد الاجتماعات والعمليات المجدولة</div>
@@ -551,7 +554,7 @@ async function clearSavedSession(){
 }
 
 const REQ_TEMPLATES = {
-  "Supermarket Robbery":[],
+  "Supermarket Robbery":["Adv. Lockpick"],
   "House Robbery":["Lockpick"], "Container":["1x Laser Drill","Firearms"], "Warehouse":["1x Device","Firearms"],
   "Bank":["2x Laptop","2x Bag","2x Device","1x Fleeca Card","2x Pliers"],
   "Cash Exchange":["2x Device","2x Bag","2x Circuit Tester","2x Phone","Key"],
@@ -672,9 +675,13 @@ async function checkWeeklyRollover(){
         }
         await fsSet('members', m.id, {weeklyPoints:0});
       }
+      const newWeekStart = getWeekStart();
       for(const o of opsCache){
-        if(o.status==='ready' || o.status==='progress'){
-          await fsSet('operations', o.id, {status:'expired'});
+        if((o.status==='ready' || o.status==='progress') && o.date){
+          const opDate = new Date(o.date+'T00:00:00');
+          if(opDate < newWeekStart){
+            await fsSet('operations', o.id, {status:'expired'});
+          }
         }
       }
       orgUpdates.currentWeekId = nowWeek;
