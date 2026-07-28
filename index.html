@@ -581,7 +581,7 @@ const CATEGORY_NOTE_HINTS = {
   "Coke Delivery":"تسليم 500 كيس خلال 7 أيام"
 };
 /* categories whose points go to the whole gang (org pool) instead of the individual named leader/participants */
-const GANG_WIDE_CATEGORIES = ["Weed Delivery", "Meth Delivery", "Coke Delivery", "Territory Capture", "Gang War", "General/Special Mission", "Laptop Robbery"];
+const GANG_WIDE_CATEGORIES = ["Supermarket Robbery", "House Robbery", "Container", "Warehouse", "Bank", "Cash Exchange", "Gun Store", "ATM (XTROJAN USB)", "Bobcat", "Jewellery"];
 const DEFAULT_POINTS_SYSTEM = [
   {id:"supermarket", label:"سرقة السوبر ماركت", points:2, order:0},
   {id:"house", label:"سرقة المنازل", points:3, order:1},
@@ -1218,9 +1218,23 @@ function openOpModal(id){
     </div>
     <div class="row2">
       <div class="field"><label>الموقع</label><input id="f-loc" value="${op&&op.location?op.location:''}"></div>
-      <div class="field"><label>القائد</label><input id="f-leader" value="${op&&op.leader?op.leader:''}"></div>
+      <div class="field"><label>القائد</label>
+        <select id="f-leader">
+          <option value="">— اختر القائد —</option>
+          ${membersCache.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(m=>`<option value="${m.name}" ${op&&op.leader===m.name?'selected':''}>${m.name}</option>`).join('')}
+        </select>
+      </div>
     </div>
-    <div class="field"><label>المشاركون (افصل بين الأسماء بفاصلة ,)</label><input id="f-participants" value="${op&&Array.isArray(op.participants)?op.participants.join('، '):''}" placeholder="مثال: خالد، سلطان، فيصل"></div>
+    <div class="field"><label>المشاركون</label>
+      <div class="case-req" style="margin-top:4px;">
+        ${membersCache.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(m=>{
+          const checked = op && Array.isArray(op.participants) && op.participants.includes(m.name);
+          return `<label class="chip participant-pick ${checked?'have':''}" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+            <input type="checkbox" class="participant-cb" value="${m.name}" ${checked?'checked':''} style="width:12px; height:12px; accent-color:var(--red); margin:0;"> ${m.name}
+          </label>`;
+        }).join('') || '<span style="font-size:11px; color:var(--muted-2);">لا يوجد أعضاء بعد</span>'}
+      </div>
+    </div>
     <div class="row2">
       <div class="field"><label>الأرباح المتوقعة ($)</label><input id="f-profit" type="number" value="${op&&op.profit?op.profit:''}"></div>
       <div class="field"><label>النقاط 🏆</label><input id="f-points" type="number" value="${op&&op.points!=null?op.points:(POINTS_BY_CATEGORY[cat]||0)}"></div>
@@ -1249,6 +1263,9 @@ function openOpModal(id){
     bindReqRowRemovals();
   };
   bindReqRowRemovals();
+  $$('.participant-cb').forEach(cb=>cb.onchange=()=>{
+    cb.closest('.participant-pick').classList.toggle('have', cb.checked);
+  });
   $('#cancelModalBtn').onclick = closeModal;
   $('#saveOpBtn').onclick = async ()=>{
     const name = $('#f-name').value.trim();
@@ -1257,7 +1274,7 @@ function openOpModal(id){
       name: row.querySelector('.req-name').value.trim(),
       have: row.querySelector('.req-have').checked
     })).filter(r=>r.name);
-    const participants = $('#f-participants').value.split(/[,،]/).map(s=>s.trim()).filter(Boolean);
+    const participants = [...$$('.participant-cb:checked')].map(cb=>cb.value);
     const data = {
       name, category:$('#f-cat').value, status:$('#f-status').value,
       date:$('#f-date').value, time:$('#f-time').value, location:$('#f-loc').value,
