@@ -1118,6 +1118,7 @@ function opCardHTML(o){
     <div class="case-foot">
       <span class="case-points">$${Number(o.profit||0).toLocaleString()}</span>
       ${editable?`<span style="display:flex; gap:6px;">
+        ${o.status==='completed'?`<button class="btn btn-sm btn-ghost recalc-op" data-id="${o.id}" title="إعادة احتساب النقاط">🔄</button>`:''}
         <button class="btn btn-sm btn-ghost edit-op" data-id="${o.id}">تعديل</button>
         <button class="btn btn-sm btn-danger del-op" data-id="${o.id}">حذف</button>
       </span>`:''}
@@ -1146,6 +1147,14 @@ function bindCaseEvents(scope){
     const reqs = Array.isArray(op.requirements) ? [...op.requirements] : (REQ_TEMPLATES[op.category]||[]).map(name=>({name, have:false}));
     reqs[c.dataset.idx] = {...reqs[c.dataset.idx], have: !reqs[c.dataset.idx].have};
     await fsSet('operations', op.id, {requirements:reqs});
+  });
+  $$(`${scope} .recalc-op`).forEach(b=>b.onclick=async (e)=>{
+    e.stopPropagation();
+    const op = opsCache.find(x=>x.id===b.dataset.id);
+    if(!op) return;
+    if(!confirm(`إعادة احتساب نقاط "${op.name}"؟ سيتم منح النقاط من جديد (${op.points||0} نقطة).`)) return;
+    await awardOperationPoints(op, op.name);
+    await fsSet('operations', op.id, {pointsAwarded:true});
   });
   $$(`${scope} .case`).forEach(card=>card.onclick=()=>openOpDetailsModal(card.dataset.id));
 }
