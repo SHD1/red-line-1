@@ -581,7 +581,7 @@ const CATEGORY_NOTE_HINTS = {
   "Coke Delivery":"تسليم 500 كيس خلال 7 أيام"
 };
 /* categories whose points go to the whole gang (org pool) instead of the individual named leader/participants */
-const GANG_WIDE_CATEGORIES = ["Territory Capture", "Gang War", "General/Special Mission"];
+const GANG_WIDE_CATEGORIES = ["Weed Delivery", "Meth Delivery", "Coke Delivery", "Territory Capture", "Gang War", "General/Special Mission", "Laptop Robbery"];
 const DEFAULT_POINTS_SYSTEM = [
   {id:"supermarket", label:"سرقة السوبر ماركت", points:2, order:0},
   {id:"house", label:"سرقة المنازل", points:3, order:1},
@@ -652,6 +652,25 @@ function weekRangeLabel(weekIdStr){
 }
 let rolloverInFlight = false;
 let rolloverIntervalStarted = false;
+let expiryCheckInFlight = false;
+async function checkOperationExpiry(){
+  if(expiryCheckInFlight) return;
+  expiryCheckInFlight = true;
+  try{
+    const today = new Date(); today.setHours(0,0,0,0);
+    for(const o of opsCache){
+      if((o.status==='ready' || o.status==='progress') && o.date){
+        const opDate = new Date(o.date+'T00:00:00');
+        if(opDate < today){
+          await fsSet('operations', o.id, {status:'expired'});
+          await addLog(`انتهت العملية تلقائيًا لتجاوز موعدها: ${o.name}`);
+        }
+      }
+    }
+  } finally {
+    expiryCheckInFlight = false;
+  }
+}
 async function checkWeeklyRollover(){
   if(rolloverInFlight) return;
   rolloverInFlight = true;
@@ -675,18 +694,9 @@ async function checkWeeklyRollover(){
         }
         await fsSet('members', m.id, {weeklyPoints:0});
       }
-      const newWeekStart = getWeekStart();
-      for(const o of opsCache){
-        if((o.status==='ready' || o.status==='progress') && o.date){
-          const opDate = new Date(o.date+'T00:00:00');
-          if(opDate < newWeekStart){
-            await fsSet('operations', o.id, {status:'expired'});
-          }
-        }
-      }
       orgUpdates.currentWeekId = nowWeek;
       orgUpdates.gangWeeklyPoints = 0;
-      await addLog(`بدأ أسبوع جديد (${nowWeek}) — تم أرشفة النقاط، تصفير نقاط الأسبوع، وإنهاء العمليات المفتوحة من الأسبوع الماضي`);
+      await addLog(`بدأ أسبوع جديد (${nowWeek}) — تم أرشفة النقاط وتصفير نقاط الأسبوع`);
     }
 
     if(monthChanged){
@@ -945,9 +955,10 @@ async function loginAs(member){
   renderNav();
   renderAll();
   checkWeeklyRollover();
+  checkOperationExpiry();
   if(!rolloverIntervalStarted){
     rolloverIntervalStarted = true;
-    setInterval(()=>{ if(currentUser) checkWeeklyRollover(); }, 30*60*1000);
+    setInterval(()=>{ if(currentUser){ checkWeeklyRollover(); checkOperationExpiry(); } }, 15*60*1000);
   }
 }
 $('#logoutBtn').onclick = async ()=>{
@@ -1245,7 +1256,7 @@ function openOpModal(id){
       requirements: reqNames
     };
     const alreadyAwarded = !!(op && op.pointsAwarded);
-    if(!alreadyAwarded && data.points>0){
+    if(data.status==='completed' && !alreadyAwarded && data.points>0){
       await awardOperationPoints(data, name);
       data.pointsAwarded = true;
     }
@@ -1256,7 +1267,10 @@ function openOpModal(id){
 }
 $('#addOpBtn').onclick = ()=> openOpModal(null);
 async function awardOperationPoints(data, opName){
-  if(!(data.points > 0)) return;
+  if(!(data.points > 0)){
+    toast('⚠ لم تُمنح أي نقاط — قيمة النقاط 0 بهذه العملية');
+    return;
+  }
   if(GANG_WIDE_CATEGORIES.includes(data.category)){
     await fsSet('org','main',{
       gangPoints:(Number(orgCache.gangPoints)||0)+data.points,
@@ -1264,11 +1278,18 @@ async function awardOperationPoints(data, opName){
       gangMonthlyPoints:(Number(orgCache.gangMonthlyPoints)||0)+data.points
     });
     await addLog(`تم منح ${data.points} نقطة للعصابة كاملة عن: ${opName}`);
+    toast(`تم منح ${data.points} نقطة لرصيد العصابة`);
   }else{
     const names = [...new Set([data.leader, ...(data.participants||[])].map(n=>(n||'').trim()).filter(Boolean))];
+    if(!names.length){
+      toast('⚠ لم تُمنح نقاط — لم يُحدد قائد أو مشاركون بهذه العملية');
+      return;
+    }
+    let matched = 0;
     for(const n of names){
       const member = membersCache.find(m=>m.name.trim()===n);
       if(member){
+        matched++;
         await fsSet('members', member.id, {
           points:(Number(member.points)||0)+data.points,
           weeklyPoints:(Number(member.weeklyPoints)||0)+data.points,
@@ -1276,6 +1297,11 @@ async function awardOperationPoints(data, opName){
         });
         await addLog(`تم منح ${data.points} نقطة لـ ${member.name} عن: ${opName}`);
       }
+    }
+    if(matched===0){
+      toast(`⚠ لم يتم العثور على عضو باسم "${names.join('، ')}" — تأكد إن الاسم مطابق تمامًا لاسم العضو بصفحة الأعضاء`);
+    }else{
+      toast(`تم منح ${data.points} نقطة لـ ${matched} عضو`);
     }
   }
 }
